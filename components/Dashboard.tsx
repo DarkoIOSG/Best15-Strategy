@@ -6,6 +6,7 @@ import MonthlyHeatmap from "./MonthlyHeatmap";
 
 const CumulativeChart = dynamic(() => import("./CumulativeChart"), { ssr: false });
 const DrawdownChart = dynamic(() => import("./DrawdownChart"), { ssr: false });
+const AssetPerformanceChart = dynamic(() => import("./AssetPerformanceChart"), { ssr: false });
 
 export default function Dashboard({ data }: { data: PerformanceData }) {
   const hasData = Object.keys(data.strategies).length > 0;
@@ -117,6 +118,19 @@ export default function Dashboard({ data }: { data: PerformanceData }) {
                 />
               </div>
             </section>
+
+            {/* Individual asset performance */}
+            {Object.keys(data.assets ?? {}).length > 0 && (
+              <section>
+                <SectionHeader title="Individual Asset Performance" subtitle="% return since first rebalance" />
+                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]">
+                  <AssetPerformanceChart
+                    assets={data.assets}
+                    rebalanceDates={data.rebalanceDates}
+                  />
+                </div>
+              </section>
+            )}
 
             {/* Drawdowns */}
             <section>

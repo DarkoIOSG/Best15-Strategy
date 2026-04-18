@@ -13,6 +13,7 @@ export function loadPerformanceData(): PerformanceData {
       latestRebalanceDate: "",
       rebalanceDates: [],
       strategies: {},
+      assets: {},
     };
   }
 }

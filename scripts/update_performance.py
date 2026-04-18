@@ -69,6 +69,55 @@ STOCK_ID_TO_TICKER: dict[str, str] = {
     "circle":    "CRCL",
 }
 
+# Display names for individual assets
+ASSET_DISPLAY_NAMES: dict[str, str] = {
+    "bitcoin":      "BTC",
+    "ethereum":     "ETH",
+    "binancecoin":  "BNB",
+    "ripple":       "XRP",
+    "solana":       "SOL",
+    "cardano":      "ADA",
+    "litecoin":     "LTC",
+    "bitcoin-cash": "BCH",
+    "chainlink":    "LINK",
+    "stellar":      "XLM",
+    "hyperliquid":  "HYPE",
+    "uniswap":      "UNI",
+    "ethena":       "ENA",
+    "morpho":       "MORPHO",
+    "ether-fi":     "ETHFI",
+    "zcash":        "ZEC",
+    "mstr":         "MSTR",
+    "hood":         "HOOD",
+    "coin":         "COIN",
+    "crcl":         "CRCL",
+}
+
+# Fixed colors per asset for consistent display
+ASSET_COLORS: dict[str, str] = {
+    "bitcoin":      "#f7931a",
+    "ethereum":     "#627eea",
+    "binancecoin":  "#f3ba2f",
+    "ripple":       "#00aae4",
+    "solana":       "#9945ff",
+    "cardano":      "#0033ad",
+    "litecoin":     "#b8b8b8",
+    "bitcoin-cash": "#2a5ada",
+    "chainlink":    "#375bd2",
+    "stellar":      "#e6c34a",
+    "hyperliquid":  "#00b4d8",
+    "uniswap":      "#ff007a",
+    "ethena":       "#1db3a0",
+    "morpho":       "#7c3aed",
+    "ether-fi":     "#06b6d4",
+    "zcash":        "#a1a1aa",
+    "mstr":         "#e11d48",
+    "hood":         "#22c55e",
+    "coin":         "#f59e0b",
+    "crcl":         "#818cf8",
+}
+ASSET_COLOR_FALLBACKS = ["#94a3b8", "#64748b", "#475569", "#334155", "#1e293b"]
+
 
 # ── Weight loading ─────────────────────────────────────────────────────────
 
@@ -407,11 +456,51 @@ def main():
         }
         print(f"  ✓ {DISPLAY_NAMES[strat_key]}: {len(daily_data)} days")
 
+    # ── Compute individual asset performance ──
+    all_strategy_assets = {
+        asset_id
+        for dates_dict in all_weights.values()
+        for w in dates_dict.values()
+        for asset_id in w.index
+    }
+    common_start = pd.Timestamp(start_date)
+    assets_out: dict = {}
+    fallback_idx = 0
+
+    for asset_id in sorted(all_strategy_assets):
+        if asset_id not in prices_df.columns:
+            continue
+        price_series = prices_df[asset_id]
+        price_series = price_series[price_series.index >= common_start].dropna()
+        if len(price_series) < 2:
+            continue
+
+        cum = price_series / price_series.iloc[0]
+        daily_data = [
+            {"date": str(idx.date()), "cumReturn": round(float(v), 6)}
+            for idx, v in cum.items()
+        ]
+
+        color = ASSET_COLORS.get(asset_id)
+        if color is None:
+            color = ASSET_COLOR_FALLBACKS[fallback_idx % len(ASSET_COLOR_FALLBACKS)]
+            fallback_idx += 1
+
+        assets_out[asset_id] = {
+            "displayName": ASSET_DISPLAY_NAMES.get(asset_id, asset_id.upper()),
+            "type":        "stock" if asset_id in STOCK_ID_TO_TICKER else "crypto",
+            "color":       color,
+            "dailyData":   daily_data,
+        }
+
+    print(f"  ✓ Individual assets: {len(assets_out)}")
+
     output = {
         "lastUpdated":         str(today),
         "latestRebalanceDate": str(latest_reb_date),
         "rebalanceDates":      [str(d) for d, _ in rebalance_dates],
         "strategies":          strategies_out,
+        "assets":              assets_out,
     }
 
     with open(OUTPUT_FILE, "w") as f:

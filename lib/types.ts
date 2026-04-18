@@ -38,9 +38,22 @@ export interface StrategyData {
   monthlyReturns: MonthlyReturn[];
 }
 
+export interface AssetDailyPoint {
+  date: string;
+  cumReturn: number;
+}
+
+export interface AssetData {
+  displayName: string;
+  type: "crypto" | "stock";
+  color: string;
+  dailyData: AssetDailyPoint[];
+}
+
 export interface PerformanceData {
   lastUpdated: string;
   latestRebalanceDate: string;
   rebalanceDates: string[];
   strategies: Record<string, StrategyData>;
+  assets: Record<string, AssetData>;
 }
