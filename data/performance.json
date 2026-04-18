@@ -46,18 +46,18 @@
         },
         {
           "date": "2026-04-18",
-          "return": -0.01076,
-          "cumReturn": 1.111603
+          "return": -0.016192,
+          "cumReturn": 1.1055
         }
       ],
       "metrics": {
-        "totalReturn": 11.16,
-        "annReturn": 24786.05,
-        "annVolatility": 46.59,
-        "sharpe": 531.9597,
-        "sortino": 1847.1405,
+        "totalReturn": 10.55,
+        "annReturn": 18575.81,
+        "annVolatility": 48.19,
+        "sharpe": 385.4718,
+        "sortino": 3054.6396,
         "maxDrawdown": -2.07,
-        "calmar": 11977.8987,
+        "calmar": 8976.7879,
         "winRate": 75.0,
         "bestDay": 4.6,
         "worstDay": -2.07,
@@ -129,7 +129,7 @@
         {
           "year": 2026,
           "month": 4,
-          "return": 11.16
+          "return": 10.55
         }
       ]
     },
@@ -174,18 +174,18 @@
         },
         {
           "date": "2026-04-18",
-          "return": -0.014829,
-          "cumReturn": 1.103038
+          "return": -0.020623,
+          "cumReturn": 1.096551
         }
       ],
       "metrics": {
-        "totalReturn": 10.3,
-        "annReturn": 16526.21,
-        "annVolatility": 50.65,
-        "sharpe": 326.2986,
-        "sortino": 1299.8548,
+        "totalReturn": 9.66,
+        "annReturn": 12124.37,
+        "annVolatility": 52.41,
+        "sharpe": 231.3529,
+        "sortino": 2480.8778,
         "maxDrawdown": -2.42,
-        "calmar": 6817.671,
+        "calmar": 5001.7502,
         "winRate": 75.0,
         "bestDay": 5.57,
         "worstDay": -2.42,
@@ -257,7 +257,7 @@
         {
           "year": 2026,
           "month": 4,
-          "return": 10.3
+          "return": 9.66
         }
       ]
     },
@@ -302,18 +302,18 @@
         },
         {
           "date": "2026-04-18",
-          "return": -0.010551,
-          "cumReturn": 1.148096
+          "return": -0.014597,
+          "cumReturn": 1.143401
         }
       ],
       "metrics": {
-        "totalReturn": 14.81,
-        "annReturn": 134000.83,
-        "annVolatility": 45.58,
-        "sharpe": 2940.142,
-        "sortino": 9064.3004,
+        "totalReturn": 14.34,
+        "annReturn": 108201.33,
+        "annVolatility": 46.94,
+        "sharpe": 2304.9191,
+        "sortino": 6628.0856,
         "maxDrawdown": -1.53,
-        "calmar": 87778.6727,
+        "calmar": 70878.4359,
         "winRate": 62.5,
         "bestDay": 4.31,
         "worstDay": -1.53,
@@ -385,7 +385,7 @@
         {
           "year": 2026,
           "month": 4,
-          "return": 14.81
+          "return": 14.34
         }
       ]
     },
@@ -430,18 +430,18 @@
         },
         {
           "date": "2026-04-18",
-          "return": -0.012777,
-          "cumReturn": 1.111848
+          "return": -0.018209,
+          "cumReturn": 1.105731
         }
       ],
       "metrics": {
-        "totalReturn": 11.18,
-        "annReturn": 25073.75,
-        "annVolatility": 50.58,
-        "sharpe": 495.7577,
-        "sortino": 1752.8517,
+        "totalReturn": 10.57,
+        "annReturn": 18779.95,
+        "annVolatility": 52.16,
+        "sharpe": 360.015,
+        "sortino": 2695.8533,
         "maxDrawdown": -2.34,
-        "calmar": 10731.2111,
+        "calmar": 8037.5546,
         "winRate": 75.0,
         "bestDay": 5.43,
         "worstDay": -2.34,
@@ -513,7 +513,869 @@
         {
           "year": 2026,
           "month": 4,
-          "return": 11.18
+          "return": 10.57
+        }
+      ]
+    }
+  },
+  "assets": {
+    "binancecoin": {
+      "displayName": "BNB",
+      "type": "crypto",
+      "color": "#f3ba2f",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.002017
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.979874
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.015737
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.014087
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.030436
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.045108
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.062812
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.039004
+        }
+      ]
+    },
+    "bitcoin": {
+      "displayName": "BTC",
+      "type": "crypto",
+      "color": "#f7931a",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.001753
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.972279
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.023861
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.016149
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.028357
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.026837
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.060093
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.0374
+        }
+      ]
+    },
+    "bitcoin-cash": {
+      "displayName": "BCH",
+      "type": "crypto",
+      "color": "#2a5ada",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.986236
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.950117
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.987067
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.981843
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 0.992873
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.011553
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.023583
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.000754
+        }
+      ]
+    },
+    "cardano": {
+      "displayName": "ADA",
+      "type": "crypto",
+      "color": "#0033ad",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.981599
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.930506
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.968088
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.938805
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 0.969291
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.01242
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.021123
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 0.970124
+        }
+      ]
+    },
+    "chainlink": {
+      "displayName": "LINK",
+      "type": "crypto",
+      "color": "#375bd2",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.997788
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.963641
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.026958
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.989966
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.021233
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.043741
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.0653
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.021641
+        }
+      ]
+    },
+    "coin": {
+      "displayName": "COIN",
+      "type": "stock",
+      "color": "#f59e0b",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.039797
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.098659
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.167113
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.190527
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.229252
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.229252
+        }
+      ]
+    },
+    "crcl": {
+      "displayName": "CRCL",
+      "type": "stock",
+      "color": "#818cf8",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.120854
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.198205
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.198546
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.220582
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.202976
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.202976
+        }
+      ]
+    },
+    "ethena": {
+      "displayName": "ENA",
+      "type": "crypto",
+      "color": "#1db3a0",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.018832
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.965605
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.058007
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.00921
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.057356
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.198305
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.372796
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.270229
+        }
+      ]
+    },
+    "ether-fi": {
+      "displayName": "ETHFI",
+      "type": "crypto",
+      "color": "#06b6d4",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.006148
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.938316
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.97027
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.960497
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.027016
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.095323
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.177699
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.095737
+        }
+      ]
+    },
+    "ethereum": {
+      "displayName": "ETH",
+      "type": "crypto",
+      "color": "#627eea",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.018855
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.980374
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.049555
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.032656
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.054322
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.044412
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.085284
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.046668
+        }
+      ]
+    },
+    "hood": {
+      "displayName": "HOOD",
+      "type": "stock",
+      "color": "#22c55e",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.035843
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.143084
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.262032
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.255239
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.311606
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.311606
+        }
+      ]
+    },
+    "hyperliquid": {
+      "displayName": "HYPE",
+      "type": "crypto",
+      "color": "#00b4d8",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.014633
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.982599
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.068373
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.041999
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.074266
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.046593
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.073949
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.060773
+        }
+      ]
+    },
+    "litecoin": {
+      "displayName": "LTC",
+      "type": "crypto",
+      "color": "#b8b8b8",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.001436
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.975039
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.992487
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.986613
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.00625
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.022542
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.030548
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.010883
+        }
+      ]
+    },
+    "morpho": {
+      "displayName": "MORPHO",
+      "type": "crypto",
+      "color": "#7c3aed",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.985777
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.92263
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.967085
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.942856
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.004814
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 0.984474
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.073404
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.062258
+        }
+      ]
+    },
+    "mstr": {
+      "displayName": "MSTR",
+      "type": "stock",
+      "color": "#e11d48",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.028918
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.068175
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.115827
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.157805
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.294465
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.294465
+        }
+      ]
+    },
+    "ripple": {
+      "displayName": "XRP",
+      "type": "crypto",
+      "color": "#00aae4",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.999498
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.979033
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.013895
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 1.002492
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.028604
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.070658
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.095933
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.051367
+        }
+      ]
+    },
+    "solana": {
+      "displayName": "SOL",
+      "type": "crypto",
+      "color": "#9945ff",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 1.000995
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.966236
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.017298
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.984434
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.002708
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.049447
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.053002
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.012988
+        }
+      ]
+    },
+    "stellar": {
+      "displayName": "XLM",
+      "type": "crypto",
+      "color": "#e6c34a",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.989638
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.970871
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.001309
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.99365
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.017095
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.08472
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.128429
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.082961
+        }
+      ]
+    },
+    "uniswap": {
+      "displayName": "UNI",
+      "type": "crypto",
+      "color": "#ff007a",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.996356
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.956531
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 1.016032
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.985816
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 1.020472
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 1.079487
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 1.106497
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 1.056156
+        }
+      ]
+    },
+    "zcash": {
+      "displayName": "ZEC",
+      "type": "crypto",
+      "color": "#a1a1aa",
+      "dailyData": [
+        {
+          "date": "2026-04-10",
+          "cumReturn": 1.0
+        },
+        {
+          "date": "2026-04-11",
+          "cumReturn": 0.993546
+        },
+        {
+          "date": "2026-04-12",
+          "cumReturn": 0.965275
+        },
+        {
+          "date": "2026-04-13",
+          "cumReturn": 0.996585
+        },
+        {
+          "date": "2026-04-14",
+          "cumReturn": 0.943177
+        },
+        {
+          "date": "2026-04-15",
+          "cumReturn": 0.938656
+        },
+        {
+          "date": "2026-04-16",
+          "cumReturn": 0.903164
+        },
+        {
+          "date": "2026-04-17",
+          "cumReturn": 0.8835
+        },
+        {
+          "date": "2026-04-18",
+          "cumReturn": 0.860826
         }
       ]
     }
