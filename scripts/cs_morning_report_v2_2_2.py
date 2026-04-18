@@ -29,7 +29,7 @@ REPO_ROOT  = os.path.dirname(QUANT_DIR)
 DATA_DIR   = os.path.join(REPO_ROOT, "data")
 
 # All persisted data goes to data/ so it survives GitHub Actions fresh checkouts
-STATE_FILE = os.path.join(DATA_DIR, "cs_state_v2_2.json")
+STATE_FILE = os.path.join(DATA_DIR, "cycle_state.json")
 OUT_PNG    = os.path.join(QUANT_DIR, "cs_morning_report_v2_2.png")
 
 # Ephemeral API cache – kept in scripts/cache/ (use GitHub Actions cache action)
