@@ -1,0 +1,42 @@
+name: Update Performance Data
+
+on:
+  schedule:
+    # Run daily at 08:00 UTC (after Asian markets close, before Europe opens)
+    - cron: "0 8 * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: pip install requests numpy pandas yfinance
+
+      - name: Run performance update script
+        env:
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+        run: python scripts/update_performance.py
+
+      - name: Commit updated performance data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/performance.json
+          git diff --cached --quiet && echo "No changes to commit" || \
+            git commit -m "chore: update performance data $(date -u +%Y-%m-%d)"
+
+      - name: Push changes
+        run: git push
