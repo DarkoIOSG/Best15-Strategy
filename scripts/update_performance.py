@@ -380,7 +380,9 @@ def main():
         metrics = compute_metrics(daily_returns)
         monthly = compute_monthly_returns(daily_returns)
 
-        latest_w = dates_dict.get(latest_reb_date) or dates_dict[max(dates_dict)]
+        latest_w = dates_dict.get(latest_reb_date)
+        if latest_w is None:
+            latest_w = dates_dict[max(dates_dict)]
         latest_weights = [
             {"coin": coin, "weight": round(float(wt), 2)}
             for coin, wt in latest_w.sort_values(ascending=False).items()
