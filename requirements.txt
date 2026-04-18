@@ -2,3 +2,6 @@ requests
 numpy
 pandas
 yfinance
+scipy
+matplotlib
+fredapi

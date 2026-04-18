@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import MetricsTable from "./MetricsTable";
 import WeightsDisplay from "./WeightsDisplay";
 import MonthlyHeatmap from "./MonthlyHeatmap";
+import Nav from "./Nav";
 
 const CumulativeChart = dynamic(() => import("./CumulativeChart"), { ssr: false });
 const DrawdownChart = dynamic(() => import("./DrawdownChart"), { ssr: false });
@@ -21,19 +22,22 @@ export default function Dashboard({ data }: { data: PerformanceData }) {
               Crypto Top 15 · BTC 50% Cap
             </p>
           </div>
-          <div className="text-right text-sm">
-            {data.lastUpdated && (
-              <div className="text-gray-400">
-                Updated&nbsp;
-                <span className="text-white font-medium">{data.lastUpdated}</span>
-              </div>
-            )}
-            {data.latestRebalanceDate && (
-              <div className="text-gray-400">
-                Last rebalance&nbsp;
-                <span className="text-white font-medium">{data.latestRebalanceDate}</span>
-              </div>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="text-right text-sm">
+              {data.lastUpdated && (
+                <div className="text-gray-400">
+                  Updated&nbsp;
+                  <span className="text-white font-medium">{data.lastUpdated}</span>
+                </div>
+              )}
+              {data.latestRebalanceDate && (
+                <div className="text-gray-400">
+                  Last rebalance&nbsp;
+                  <span className="text-white font-medium">{data.latestRebalanceDate}</span>
+                </div>
+              )}
+            </div>
+            <Nav />
           </div>
         </div>
       </header>

@@ -29,3 +29,5 @@ next-env.d.ts
 __pycache__/
 *.py[cod]
 .venv/
+scripts/cache/
+scripts/*.png

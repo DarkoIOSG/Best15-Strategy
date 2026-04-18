@@ -57,3 +57,57 @@ export interface PerformanceData {
   strategies: Record<string, StrategyData>;
   assets: Record<string, AssetData>;
 }
+
+export interface DominantPair {
+  s1: string;
+  s2: string;
+  power: number;
+  windows: string[];
+}
+
+export interface SignalFlip {
+  signal: string;
+  from: string;
+  to: string;
+}
+
+export interface CooldownEvent {
+  date: string;
+  blocked_move: string;
+  reason: string;
+  remaining_days: number;
+}
+
+export interface CycleSignalState {
+  date: string;
+  btc_price: number;
+  exposure: number;
+  direction: "BULLISH" | "BEARISH" | "NEUTRAL";
+  composite: number;
+  gate: number;
+  vol_z: number;
+  vol_regime: "LOW" | "NORMAL" | "HIGH" | "EXTREME";
+  bull_count: number;
+  neut_count: number;
+  bear_count: number;
+  bull_signals?: string[];
+  bear_signals?: string[];
+  neut_signals?: string[];
+  flips: SignalFlip[];
+  dominant_pairs: DominantPair[];
+  cooldown_events: CooldownEvent[];
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
+  risk_factors: string[];
+  cache_warnings: string[];
+}
+
+export interface CycleHistoryPoint {
+  date: string;
+  combo: number | null;
+  exposure: number | null;
+}
+
+export interface CycleSignalData {
+  state: CycleSignalState | null;
+  history: CycleHistoryPoint[];
+}
