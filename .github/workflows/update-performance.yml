@@ -21,9 +21,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: "pip"
+          cache-dependency-path: "requirements.txt"
 
       - name: Install Python dependencies
-        run: pip install requests numpy pandas yfinance
+        run: pip install -r requirements.txt
 
       - name: Run performance update script
         env:
