@@ -1,0 +1,166 @@
+{
+  "date": "2026-04-18",
+  "btc_price": 75793.5234375,
+  "exposure": 0.5,
+  "direction": "BEARISH",
+  "composite": 0.09074074074074073,
+  "gate": 0.0,
+  "vol_z": -0.2430576125365134,
+  "vol_regime": "NORMAL",
+  "bull_count": 16,
+  "neut_count": 32,
+  "bear_count": 11,
+  "bull_signals": [
+    "MVRV",
+    "LTH_SOPR",
+    "NVT",
+    "Exch_Reserve",
+    "SOPR_Ratio",
+    "SSR",
+    "Puell_Proxy",
+    "LR_1Y",
+    "LR_2Y_Z",
+    "DXY",
+    "SP500_SMA_50_200",
+    "SP500_EMA_50_200",
+    "GapPct_SMA365_365d",
+    "GapPct_EMA365_365d",
+    "FFR_vs_MA365",
+    "RRP_Trend_90d"
+  ],
+  "bear_signals": [
+    "STH_SOPR",
+    "Lev_Ratio",
+    "RealVol_90",
+    "HY_Spread",
+    "Zscore_SMA50_daily",
+    "Zscore_SMA90_daily",
+    "Zscore_EMA50_daily",
+    "Zscore_EMA90_daily",
+    "GapPct_SMA90_365d",
+    "SOFR_IORB_Spread_Sign",
+    "PPI_vs_CPI"
+  ],
+  "neut_signals": [
+    "SOPR",
+    "SOPR_Adj",
+    "NVM",
+    "S2F_Dev",
+    "Exch_Netflow",
+    "Whale_Ratio",
+    "MPI",
+    "Puell",
+    "Dormancy",
+    "Open_Interest",
+    "Coinbase_Prem",
+    "NRPL",
+    "MVRV_Proxy",
+    "RealVol_30",
+    "VIX",
+    "SP500_Trend",
+    "Gold_90d",
+    "MABreak_SMA_daily_30_90_180_365",
+    "MABreak_SMA_daily_50_100_200_365",
+    "MABreak_SMA_weekly_4_13_26_52",
+    "MABreak_EMA_daily_30_90_180_365",
+    "MABreak_EMA_daily_50_100_200_365",
+    "MABreak_EMA_weekly_4_13_26_52",
+    "Zscore_SMA200_daily",
+    "Zscore_SMA365_daily",
+    "Zscore_SMA26_weekly",
+    "Zscore_EMA200_daily",
+    "Zscore_EMA365_daily",
+    "Zscore_EMA26_weekly",
+    "GapPct_SMA200_365d",
+    "GapPct_EMA90_365d",
+    "GapPct_EMA200_365d"
+  ],
+  "flips": [],
+  "dominant_pairs": [
+    {
+      "s1": "Zscore_SMA26_weekly",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 48.26667594161837,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "Zscore_EMA26_weekly",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 46.94474477596424,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "SOFR_IORB_Spread_Sign",
+      "s2": "PPI_vs_CPI",
+      "power": 44.60440687557471,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "MABreak_SMA_daily_30_90_180_365",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 44.09446165953468,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "MABreak_SMA_daily_50_100_200_365",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 42.35276415842163,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "Zscore_SMA26_weekly",
+      "s2": "PPI_vs_CPI",
+      "power": 41.15797015289401,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "MVRV",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 40.36828343198665,
+      "windows": [
+        "2Y",
+        "3Y"
+      ]
+    },
+    {
+      "s1": "Zscore_EMA26_weekly",
+      "s2": "PPI_vs_CPI",
+      "power": 39.85022767923391,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "MABreak_SMA_daily_30_90_180_365",
+      "s2": "PPI_vs_CPI",
+      "power": 39.82211189149913,
+      "windows": [
+        "3Y"
+      ]
+    },
+    {
+      "s1": "MABreak_SMA_weekly_4_13_26_52",
+      "s2": "SOFR_IORB_Spread_Sign",
+      "power": 39.59861812248224,
+      "windows": [
+        "3Y"
+      ]
+    }
+  ],
+  "cooldown_events": [],
+  "risk_level": "LOW",
+  "risk_factors": [],
+  "cache_warnings": []
+}
