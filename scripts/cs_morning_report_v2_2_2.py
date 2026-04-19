@@ -754,24 +754,21 @@ def main():
     prev_exp_val  = float(hist_exp.iloc[-1]) if len(hist_exp) > 0 else 0.5
     current_combo = float(ens_window.iloc[-1]) if len(ens_window) > 0 else 0.0
 
-    if len(hist_exp) > 0:
-        full_exp = hist_exp.copy()
-        for t, v in ens_window.items():
-            if np.isnan(v) or abs(v) < gate:
-                val = float(full_exp.iloc[-1]) if len(full_exp) > 0 else 0.5
-            else:
-                n_ab = sum(abs(v) >= th for th in thresholds)
-                val  = (min(0.5 + n_ab * DELTA, 1.0) if v < 0
-                        else max(0.5 - n_ab * DELTA, 0.0))
-            full_exp.loc[t] = val
-    else:
-        if np.isnan(current_combo) or abs(current_combo) < gate:
-            current_exp_raw = 0.5
+    # Always compute full_exp from the complete ens_window series so that
+    # cycle_history.json is backfilled with all available history on first run.
+    seed = hist_exp.copy() if len(hist_exp) > 0 else pd.Series(dtype=float)
+    prev_val = float(seed.iloc[-1]) if len(seed) > 0 else 0.5
+    exp_vals = {}
+    for t, v in ens_window.items():
+        if np.isnan(v) or abs(v) < gate:
+            val = prev_val
         else:
-            n_above = sum(abs(current_combo) >= th for th in thresholds)
-            current_exp_raw = (min(0.5 + n_above * DELTA, 1.0) if current_combo < 0
-                               else max(0.5 - n_above * DELTA, 0.0))
-        full_exp = pd.Series(current_exp_raw, index=[close.index[-1]])
+            n_ab = sum(abs(v) >= th for th in thresholds)
+            val  = (min(0.5 + n_ab * DELTA, 1.0) if v < 0
+                    else max(0.5 - n_ab * DELTA, 0.0))
+        exp_vals[t] = val
+        prev_val = val
+    full_exp = pd.Series(exp_vals) if exp_vals else pd.Series(0.5, index=[close.index[-1]])
 
     full_exp, cooldown_events = apply_cooldown(full_exp)
     current_exp = float(full_exp.iloc[-1])
@@ -1033,17 +1030,18 @@ def main():
     # cycle_state.json = same as state (save_state already writes here)
     print(f"  State      → {STATE_FILE}")
 
-    # cycle_history.json – append-only time series for the history chart
+    # cycle_history.json – rebuilt from full computed series each run (self-healing backfill)
     web_hist_path = os.path.join(DATA_DIR, "cycle_history.json")
     web_history = []
-    if os.path.exists(web_hist_path):
-        try:
-            with open(web_hist_path) as f:
-                web_history = json.load(f)
-        except Exception:
-            web_history = []
-    if not any(h.get("date") == today_str for h in web_history):
-        web_history.append({"date": today_str, "combo": current_combo, "exposure": current_exp, "btc_price": round(btc_now, 2)})
+    for t in full_exp.index:
+        t_str = str(t.date())
+        c_val = ens_window.loc[t] if t in ens_window.index else float("nan")
+        web_history.append({
+            "date":      t_str,
+            "combo":     None if (np.isnan(c_val)) else round(float(c_val), 6),
+            "exposure":  round(float(full_exp.loc[t]), 4),
+            "btc_price": round(float(close.loc[t]), 2) if t in close.index else None,
+        })
     with open(web_hist_path, "w") as f:
         json.dump(web_history, f)
     print(f"  History    → {web_hist_path} ({len(web_history)} entries)")
