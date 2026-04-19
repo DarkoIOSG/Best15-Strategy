@@ -731,10 +731,10 @@ def main():
     hist_combo = pd.Series(dtype=float)
     hist_exp   = pd.Series(dtype=float)
     if os.path.exists(hist_combo_path):
-        hist_combo = pd.read_csv(hist_combo_path, index_col=0, parse_dates=True).squeeze()
+        hist_combo = pd.read_csv(hist_combo_path, index_col=0, parse_dates=True).iloc[:, 0]
         hist_combo.index = pd.to_datetime(hist_combo.index).tz_localize(None)
     if os.path.exists(hist_exp_path):
-        hist_exp = pd.read_csv(hist_exp_path, index_col=0, parse_dates=True).squeeze()
+        hist_exp = pd.read_csv(hist_exp_path, index_col=0, parse_dates=True).iloc[:, 0]
         hist_exp.index = pd.to_datetime(hist_exp.index).tz_localize(None)
 
     gate_lookback_start = close.index[-1] - pd.DateOffset(years=GATE_THRESHOLD_LOOKBACK)
