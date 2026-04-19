@@ -1,15 +1,15 @@
 {
   "date": "2026-04-19",
-  "btc_price": 75162.046875,
-  "exposure": 0.5,
+  "btc_price": 75122.390625,
+  "exposure": 0.4,
   "direction": "BEARISH",
   "composite": 0.09999999999999999,
   "gate": 0.0,
-  "vol_z": -0.2314645786090874,
+  "vol_z": -0.2303373353267914,
   "vol_regime": "NORMAL",
   "bull_count": 17,
-  "neut_count": 31,
-  "bear_count": 11,
+  "neut_count": 32,
+  "bear_count": 10,
   "bull_signals": [
     "MVRV",
     "LTH_SOPR",
@@ -38,7 +38,6 @@
     "Zscore_SMA90_daily",
     "Zscore_EMA50_daily",
     "Zscore_EMA90_daily",
-    "GapPct_SMA90_365d",
     "SOFR_IORB_Spread_Sign",
     "PPI_vs_CPI"
   ],
@@ -71,6 +70,7 @@
     "Zscore_EMA200_daily",
     "Zscore_EMA365_daily",
     "Zscore_EMA26_weekly",
+    "GapPct_SMA90_365d",
     "GapPct_SMA200_365d",
     "GapPct_EMA90_365d",
     "GapPct_EMA200_365d"
@@ -78,6 +78,11 @@
   "flips": [
     {
       "signal": "Whale_Ratio",
+      "from": "BEAR",
+      "to": "NEUTRAL"
+    },
+    {
+      "signal": "GapPct_SMA90_365d",
       "from": "BEAR",
       "to": "NEUTRAL"
     }
@@ -167,34 +172,34 @@
   ],
   "cooldown_events": [
     {
-      "date": "2026-03-20",
-      "blocked_move": "50% \u2192 60%",
+      "date": "2026-04-01",
+      "blocked_move": "70% \u2192 80%",
+      "reason": "direction reversal within 7d cooldown",
+      "remaining_days": 6
+    },
+    {
+      "date": "2026-04-06",
+      "blocked_move": "40% \u2192 50%",
       "reason": "direction reversal within 7d cooldown",
       "remaining_days": 3
     },
     {
-      "date": "2026-03-21",
-      "blocked_move": "50% \u2192 60%",
-      "reason": "direction reversal within 7d cooldown",
-      "remaining_days": 2
-    },
-    {
-      "date": "2026-03-28",
-      "blocked_move": "60% \u2192 50%",
-      "reason": "direction reversal within 7d cooldown",
-      "remaining_days": 2
-    },
-    {
-      "date": "2026-03-29",
-      "blocked_move": "60% \u2192 50%",
+      "date": "2026-04-08",
+      "blocked_move": "40% \u2192 50%",
       "reason": "direction reversal within 7d cooldown",
       "remaining_days": 1
     },
     {
-      "date": "2026-04-01",
-      "blocked_move": "50% \u2192 60%",
+      "date": "2026-04-14",
+      "blocked_move": "50% \u2192 40%",
       "reason": "direction reversal within 7d cooldown",
-      "remaining_days": 6
+      "remaining_days": 2
+    },
+    {
+      "date": "2026-04-15",
+      "blocked_move": "50% \u2192 40%",
+      "reason": "direction reversal within 7d cooldown",
+      "remaining_days": 1
     }
   ],
   "risk_level": "MEDIUM",
