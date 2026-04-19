@@ -1043,7 +1043,7 @@ def main():
         except Exception:
             web_history = []
     if not any(h.get("date") == today_str for h in web_history):
-        web_history.append({"date": today_str, "combo": current_combo, "exposure": current_exp})
+        web_history.append({"date": today_str, "combo": current_combo, "exposure": current_exp, "btc_price": round(btc_now, 2)})
     with open(web_hist_path, "w") as f:
         json.dump(web_history, f)
     print(f"  History    → {web_hist_path} ({len(web_history)} entries)")

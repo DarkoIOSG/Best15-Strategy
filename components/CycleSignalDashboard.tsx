@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import Nav from "./Nav";
 
 const ExposureHistoryChart = dynamic(() => import("./ExposureHistoryChart"), { ssr: false });
+const Btc90ExposureChart = dynamic(() => import("./Btc90ExposureChart"), { ssr: false });
 const SignalBreakdownChart = dynamic(() => import("./SignalBreakdownChart"), { ssr: false });
 const DominantPairsChart = dynamic(() => import("./DominantPairsChart"), { ssr: false });
 
@@ -137,6 +138,16 @@ export default function CycleSignalDashboard({ data }: { data: CycleSignalData }
                 </div>
               </div>
             </section>
+
+            {/* 90-day BTC + Exposure chart */}
+            {history.length > 0 && (
+              <section>
+                <SectionHeader title="Last 90 Days" subtitle="exposure · BTC price" />
+                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]">
+                  <Btc90ExposureChart history={history} />
+                </div>
+              </section>
+            )}
 
             {/* Signal breakdown + Dominant pairs */}
             <section>

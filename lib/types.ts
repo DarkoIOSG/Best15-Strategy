@@ -105,6 +105,7 @@ export interface CycleHistoryPoint {
   date: string;
   combo: number | null;
   exposure: number | null;
+  btc_price?: number | null;
 }
 
 export interface CycleSignalData {
