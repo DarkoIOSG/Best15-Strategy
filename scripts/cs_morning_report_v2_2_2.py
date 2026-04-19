@@ -710,7 +710,10 @@ def main():
             all_pairs_info[key]["windows"].append(f"{ty}Y")
             all_pairs_info[key]["power"] = max(all_pairs_info[key]["power"], pw)
 
-        window_dates = close.index[close.index >= current_rd]
+        # Score 365 days back so cycle_history.json has enough history for the chart.
+        # The current signal still uses only ens_window.iloc[-1] so no lookahead risk.
+        hist_start   = current_rd - pd.DateOffset(days=365)
+        window_dates = close.index[close.index >= hist_start]
         combo = pd.Series(np.nan, index=window_dates)
         for t in window_dates:
             combo.loc[t] = _mod.score_at_date(disc, fwd, top_pairs, t)
