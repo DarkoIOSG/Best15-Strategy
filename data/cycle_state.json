@@ -1,27 +1,29 @@
 {
-  "date": "2026-04-19",
-  "btc_price": 75122.390625,
-  "exposure": 0.4,
+  "date": "2026-04-20",
+  "btc_price": 74815.859375,
+  "exposure": 0.3,
   "direction": "BEARISH",
   "composite": 0.09999999999999999,
   "gate": 0.0,
-  "vol_z": -0.2303373353267914,
+  "vol_z": -0.2354193332755165,
   "vol_regime": "NORMAL",
-  "bull_count": 17,
-  "neut_count": 32,
-  "bear_count": 10,
+  "bull_count": 19,
+  "neut_count": 29,
+  "bear_count": 11,
   "bull_signals": [
     "MVRV",
+    "SOPR",
+    "SOPR_Adj",
     "LTH_SOPR",
     "Exch_Reserve",
     "SOPR_Ratio",
     "Dormancy",
     "SSR",
-    "Coinbase_Prem",
+    "NRPL",
     "Puell_Proxy",
     "LR_1Y",
     "LR_2Y_Z",
-    "DXY",
+    "Gold_90d",
     "SP500_SMA_50_200",
     "SP500_EMA_50_200",
     "GapPct_SMA365_365d",
@@ -31,6 +33,7 @@
   ],
   "bear_signals": [
     "NVM",
+    "Whale_Ratio",
     "Lev_Ratio",
     "RealVol_90",
     "HY_Spread",
@@ -42,22 +45,19 @@
     "PPI_vs_CPI"
   ],
   "neut_signals": [
-    "SOPR",
-    "SOPR_Adj",
     "STH_SOPR",
     "NVT",
     "S2F_Dev",
     "Exch_Netflow",
-    "Whale_Ratio",
     "MPI",
     "Puell",
     "Open_Interest",
-    "NRPL",
+    "Coinbase_Prem",
     "MVRV_Proxy",
     "RealVol_30",
     "VIX",
+    "DXY",
     "SP500_Trend",
-    "Gold_90d",
     "MABreak_SMA_daily_30_90_180_365",
     "MABreak_SMA_daily_50_100_200_365",
     "MABreak_SMA_weekly_4_13_26_52",
@@ -77,13 +77,28 @@
   ],
   "flips": [
     {
-      "signal": "Whale_Ratio",
-      "from": "BEAR",
+      "signal": "MVRV_Proxy",
+      "from": "BULL",
       "to": "NEUTRAL"
     },
     {
-      "signal": "GapPct_SMA90_365d",
-      "from": "BEAR",
+      "signal": "DXY",
+      "from": "BULL",
+      "to": "NEUTRAL"
+    },
+    {
+      "signal": "Gold_90d",
+      "from": "NEUTRAL",
+      "to": "BULL"
+    },
+    {
+      "signal": "Zscore_EMA90_daily",
+      "from": "NEUTRAL",
+      "to": "BEAR"
+    },
+    {
+      "signal": "GapPct_EMA200_365d",
+      "from": "BULL",
       "to": "NEUTRAL"
     }
   ],
@@ -172,12 +187,6 @@
   ],
   "cooldown_events": [
     {
-      "date": "2026-04-01",
-      "blocked_move": "70% \u2192 80%",
-      "reason": "direction reversal within 7d cooldown",
-      "remaining_days": 6
-    },
-    {
       "date": "2026-04-06",
       "blocked_move": "40% \u2192 50%",
       "reason": "direction reversal within 7d cooldown",
@@ -200,11 +209,18 @@
       "blocked_move": "50% \u2192 40%",
       "reason": "direction reversal within 7d cooldown",
       "remaining_days": 1
+    },
+    {
+      "date": "2026-04-20",
+      "blocked_move": "30% \u2192 40%",
+      "reason": "direction reversal within 7d cooldown",
+      "remaining_days": 6
     }
   ],
   "risk_level": "MEDIUM",
   "risk_factors": [
-    "Cooldowns blocking moves"
+    "Cooldowns blocking moves",
+    "High signal churn (5 flips)"
   ],
   "cache_warnings": []
 }
