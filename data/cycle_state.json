@@ -1,15 +1,15 @@
 {
   "date": "2026-04-20",
-  "btc_price": 74815.859375,
+  "btc_price": 75332.3203125,
   "exposure": 0.3,
   "direction": "BEARISH",
   "composite": 0.09999999999999999,
   "gate": 0.0,
-  "vol_z": -0.2354193332755165,
+  "vol_z": -0.21546975420227588,
   "vol_regime": "NORMAL",
-  "bull_count": 19,
-  "neut_count": 29,
-  "bear_count": 11,
+  "bull_count": 20,
+  "neut_count": 27,
+  "bear_count": 12,
   "bull_signals": [
     "MVRV",
     "SOPR",
@@ -23,6 +23,7 @@
     "Puell_Proxy",
     "LR_1Y",
     "LR_2Y_Z",
+    "DXY",
     "Gold_90d",
     "SP500_SMA_50_200",
     "SP500_EMA_50_200",
@@ -41,6 +42,7 @@
     "Zscore_SMA90_daily",
     "Zscore_EMA50_daily",
     "Zscore_EMA90_daily",
+    "GapPct_SMA90_365d",
     "SOFR_IORB_Spread_Sign",
     "PPI_vs_CPI"
   ],
@@ -56,7 +58,6 @@
     "MVRV_Proxy",
     "RealVol_30",
     "VIX",
-    "DXY",
     "SP500_Trend",
     "MABreak_SMA_daily_30_90_180_365",
     "MABreak_SMA_daily_50_100_200_365",
@@ -70,7 +71,6 @@
     "Zscore_EMA200_daily",
     "Zscore_EMA365_daily",
     "Zscore_EMA26_weekly",
-    "GapPct_SMA90_365d",
     "GapPct_SMA200_365d",
     "GapPct_EMA90_365d",
     "GapPct_EMA200_365d"
@@ -82,17 +82,17 @@
       "to": "NEUTRAL"
     },
     {
-      "signal": "DXY",
-      "from": "BULL",
-      "to": "NEUTRAL"
-    },
-    {
       "signal": "Gold_90d",
       "from": "NEUTRAL",
       "to": "BULL"
     },
     {
       "signal": "Zscore_EMA90_daily",
+      "from": "NEUTRAL",
+      "to": "BEAR"
+    },
+    {
+      "signal": "GapPct_SMA90_365d",
       "from": "NEUTRAL",
       "to": "BEAR"
     },
