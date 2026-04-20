@@ -18,15 +18,6 @@ Two GitHub Actions workflows run automatically each day:
 
 Both workflows commit and push the updated data files automatically.
 
-## Local Development
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
 ## Running the Cycle Signal Script Locally
 
 Requires a `CRYPTOQUANT_KEY` and `FRED_API_KEY` environment variable.
