@@ -1,23 +1,27 @@
 {
-  "date": "2026-04-22",
-  "btc_price": 78006.78125,
-  "exposure": 0.4,
+  "date": "2026-04-23",
+  "btc_price": 77240.0078125,
+  "exposure": 0.5,
   "direction": "BEARISH",
   "composite": 0.018518518518518517,
   "gate": 0.0,
-  "vol_z": -0.35752667612356676,
+  "vol_z": -0.32674304170417395,
   "vol_regime": "NORMAL",
-  "bull_count": 18,
-  "neut_count": 28,
-  "bear_count": 13,
+  "bull_count": 22,
+  "neut_count": 25,
+  "bear_count": 12,
   "bull_signals": [
     "MVRV",
+    "SOPR",
+    "SOPR_Adj",
     "LTH_SOPR",
     "NVT",
     "Exch_Reserve",
     "Puell",
     "SOPR_Ratio",
     "SSR",
+    "Coinbase_Prem",
+    "NRPL",
     "Puell_Proxy",
     "LR_1Y",
     "LR_2Y_Z",
@@ -31,9 +35,9 @@
     "RRP_Trend_90d"
   ],
   "bear_signals": [
+    "STH_SOPR",
     "NVM",
-    "Exch_Netflow",
-    "Dormancy",
+    "MPI",
     "Lev_Ratio",
     "RealVol_90",
     "HY_Spread",
@@ -42,19 +46,14 @@
     "Zscore_EMA50_daily",
     "Zscore_EMA90_daily",
     "GapPct_SMA90_365d",
-    "GapPct_EMA90_365d",
     "PPI_vs_CPI"
   ],
   "neut_signals": [
-    "SOPR",
-    "SOPR_Adj",
-    "STH_SOPR",
     "S2F_Dev",
+    "Exch_Netflow",
     "Whale_Ratio",
-    "MPI",
+    "Dormancy",
     "Open_Interest",
-    "Coinbase_Prem",
-    "NRPL",
     "MVRV_Proxy",
     "RealVol_30",
     "VIX",
@@ -73,18 +72,14 @@
     "Zscore_EMA365_daily",
     "Zscore_EMA26_weekly",
     "GapPct_SMA200_365d",
+    "GapPct_EMA90_365d",
     "GapPct_EMA200_365d"
   ],
   "flips": [
     {
-      "signal": "Exch_Netflow",
-      "from": "NEUTRAL",
-      "to": "BEAR"
-    },
-    {
       "signal": "GapPct_EMA90_365d",
-      "from": "NEUTRAL",
-      "to": "BEAR"
+      "from": "BEAR",
+      "to": "NEUTRAL"
     }
   ],
   "dominant_pairs": [
