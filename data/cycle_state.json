@@ -1,21 +1,19 @@
 {
-  "date": "2026-04-26",
-  "btc_price": 77998.3984375,
+  "date": "2026-04-27",
+  "btc_price": 77886.921875,
   "exposure": 0.5,
   "direction": "BULLISH",
   "composite": -0.009259259259259259,
   "gate": 0.0,
-  "vol_z": -0.7252395389427948,
+  "vol_z": -0.6895985284471351,
   "vol_regime": "LOW",
-  "bull_count": 17,
+  "bull_count": 15,
   "neut_count": 31,
-  "bear_count": 11,
+  "bear_count": 13,
   "bull_signals": [
     "MVRV",
-    "LTH_SOPR",
     "Exch_Reserve",
     "MPI",
-    "SOPR_Ratio",
     "Dormancy",
     "SSR",
     "Puell_Proxy",
@@ -30,7 +28,9 @@
     "RRP_Trend_90d"
   ],
   "bear_signals": [
+    "NVT",
     "NVM",
+    "Whale_Ratio",
     "Lev_Ratio",
     "RealVol_90",
     "HY_Spread",
@@ -46,11 +46,11 @@
     "SOPR",
     "SOPR_Adj",
     "STH_SOPR",
-    "NVT",
+    "LTH_SOPR",
     "S2F_Dev",
     "Exch_Netflow",
-    "Whale_Ratio",
     "Puell",
+    "SOPR_Ratio",
     "Open_Interest",
     "Coinbase_Prem",
     "NRPL",
@@ -75,13 +75,7 @@
     "GapPct_EMA200_365d",
     "SOFR_IORB_Spread_Sign"
   ],
-  "flips": [
-    {
-      "signal": "GapPct_EMA90_365d",
-      "from": "NEUTRAL",
-      "to": "BEAR"
-    }
-  ],
+  "flips": [],
   "dominant_pairs": [
     {
       "s1": "Zscore_SMA26_weekly",
