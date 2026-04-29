@@ -1,22 +1,25 @@
 {
-  "date": "2026-04-28",
-  "btc_price": 76606.0390625,
+  "date": "2026-04-29",
+  "btc_price": 77619.921875,
   "exposure": 0.5,
   "direction": "BEARISH",
   "composite": 0.10694444444444445,
   "gate": 0.0,
-  "vol_z": -0.6425695665400295,
+  "vol_z": -0.6153550478294636,
   "vol_regime": "LOW",
-  "bull_count": 16,
-  "neut_count": 32,
+  "bull_count": 19,
+  "neut_count": 29,
   "bear_count": 11,
   "bull_signals": [
     "MVRV",
+    "SOPR",
+    "SOPR_Adj",
     "LTH_SOPR",
     "Exch_Reserve",
     "SOPR_Ratio",
     "Dormancy",
     "SSR",
+    "NRPL",
     "Puell_Proxy",
     "LR_1Y",
     "LR_2Y_Z",
@@ -42,8 +45,6 @@
     "PPI_vs_CPI"
   ],
   "neut_signals": [
-    "SOPR",
-    "SOPR_Adj",
     "STH_SOPR",
     "NVT",
     "S2F_Dev",
@@ -53,7 +54,6 @@
     "Puell",
     "Open_Interest",
     "Coinbase_Prem",
-    "NRPL",
     "MVRV_Proxy",
     "RealVol_30",
     "VIX",
@@ -161,12 +161,6 @@
   ],
   "cooldown_events": [
     {
-      "date": "2026-04-24",
-      "blocked_move": "50% \u2192 40%",
-      "reason": "direction reversal within 7d cooldown",
-      "remaining_days": 6
-    },
-    {
       "date": "2026-04-25",
       "blocked_move": "50% \u2192 40%",
       "reason": "direction reversal within 7d cooldown",
@@ -189,6 +183,12 @@
       "blocked_move": "50% \u2192 30%",
       "reason": "direction reversal within 7d cooldown",
       "remaining_days": 2
+    },
+    {
+      "date": "2026-04-29",
+      "blocked_move": "50% \u2192 30%",
+      "reason": "direction reversal within 7d cooldown",
+      "remaining_days": 1
     }
   ],
   "risk_level": "MEDIUM",
