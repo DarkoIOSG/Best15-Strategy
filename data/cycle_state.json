@@ -1,19 +1,22 @@
 {
-  "date": "2026-05-02",
-  "btc_price": 78310.171875,
+  "date": "2026-05-03",
+  "btc_price": 78532.5,
   "exposure": 0.3,
   "direction": "BEARISH",
-  "composite": 0.10462962962962964,
+  "composite": 0.11157407407407409,
   "gate": 0.0,
-  "vol_z": -0.6699006640199797,
+  "vol_z": -0.6663055116952813,
   "vol_regime": "LOW",
-  "bull_count": 15,
-  "neut_count": 33,
-  "bear_count": 11,
+  "bull_count": 18,
+  "neut_count": 28,
+  "bear_count": 13,
   "bull_signals": [
     "MVRV",
-    "NVT",
+    "LTH_SOPR",
     "Exch_Reserve",
+    "MPI",
+    "SOPR_Ratio",
+    "Dormancy",
     "SSR",
     "Puell_Proxy",
     "LR_1Y",
@@ -28,6 +31,8 @@
     "RRP_Trend_90d"
   ],
   "bear_signals": [
+    "NVM",
+    "Whale_Ratio",
     "Lev_Ratio",
     "RealVol_90",
     "HY_Spread",
@@ -44,15 +49,10 @@
     "SOPR",
     "SOPR_Adj",
     "STH_SOPR",
-    "LTH_SOPR",
-    "NVM",
+    "NVT",
     "S2F_Dev",
     "Exch_Netflow",
-    "Whale_Ratio",
-    "MPI",
     "Puell",
-    "SOPR_Ratio",
-    "Dormancy",
     "Open_Interest",
     "Coinbase_Prem",
     "NRPL",
@@ -75,18 +75,7 @@
     "GapPct_SMA200_365d",
     "GapPct_EMA200_365d"
   ],
-  "flips": [
-    {
-      "signal": "Exch_Netflow",
-      "from": "BULL",
-      "to": "NEUTRAL"
-    },
-    {
-      "signal": "Puell_Proxy",
-      "from": "NEUTRAL",
-      "to": "BULL"
-    }
-  ],
+  "flips": [],
   "dominant_pairs": [
     {
       "s1": "Zscore_SMA26_weekly",
@@ -204,7 +193,6 @@
   ],
   "risk_level": "MEDIUM",
   "risk_factors": [
-    "Large daily shift (-20%)",
     "Cooldowns blocking moves"
   ],
   "cache_warnings": []
