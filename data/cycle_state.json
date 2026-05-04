@@ -1,32 +1,27 @@
 {
-  "date": "2026-05-03",
-  "btc_price": 78532.5,
+  "date": "2026-05-04",
+  "btc_price": 78918.0,
   "exposure": 0.3,
   "direction": "BEARISH",
-  "composite": 0.11157407407407409,
+  "composite": 0.11527777777777778,
   "gate": 0.0,
-  "vol_z": -0.6663055116952813,
+  "vol_z": -0.6645676654646446,
   "vol_regime": "LOW",
-  "bull_count": 18,
-  "neut_count": 28,
+  "bull_count": 13,
+  "neut_count": 33,
   "bear_count": 13,
   "bull_signals": [
     "MVRV",
-    "LTH_SOPR",
     "Exch_Reserve",
     "MPI",
-    "SOPR_Ratio",
-    "Dormancy",
     "SSR",
     "Puell_Proxy",
     "LR_1Y",
     "LR_2Y_Z",
-    "DXY",
     "Gold_90d",
     "SP500_SMA_50_200",
     "SP500_EMA_50_200",
     "GapPct_SMA365_365d",
-    "GapPct_EMA365_365d",
     "FFR_vs_MA365",
     "RRP_Trend_90d"
   ],
@@ -49,16 +44,20 @@
     "SOPR",
     "SOPR_Adj",
     "STH_SOPR",
+    "LTH_SOPR",
     "NVT",
     "S2F_Dev",
     "Exch_Netflow",
     "Puell",
+    "SOPR_Ratio",
+    "Dormancy",
     "Open_Interest",
     "Coinbase_Prem",
     "NRPL",
     "MVRV_Proxy",
     "RealVol_30",
     "VIX",
+    "DXY",
     "SP500_Trend",
     "MABreak_SMA_daily_30_90_180_365",
     "MABreak_SMA_daily_50_100_200_365",
@@ -73,9 +72,21 @@
     "Zscore_EMA365_daily",
     "Zscore_EMA26_weekly",
     "GapPct_SMA200_365d",
-    "GapPct_EMA200_365d"
+    "GapPct_EMA200_365d",
+    "GapPct_EMA365_365d"
   ],
-  "flips": [],
+  "flips": [
+    {
+      "signal": "DXY",
+      "from": "BULL",
+      "to": "NEUTRAL"
+    },
+    {
+      "signal": "GapPct_EMA365_365d",
+      "from": "BULL",
+      "to": "NEUTRAL"
+    }
+  ],
   "dominant_pairs": [
     {
       "s1": "Zscore_SMA26_weekly",
