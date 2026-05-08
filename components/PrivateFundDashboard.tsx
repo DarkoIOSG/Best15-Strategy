@@ -6,6 +6,7 @@ import Nav from "./Nav";
 
 const PrivateFundIndexChart = dynamic(() => import("./PrivateFundIndexChart"), { ssr: false });
 const PrivateFundAssetPerf = dynamic(() => import("./PrivateFundAssetPerf"), { ssr: false });
+const PrivateFundPositionsLive = dynamic(() => import("./PrivateFundPositionsLive"), { ssr: false });
 
 interface Props {
   privateData: StrategyData | undefined;
@@ -162,6 +163,7 @@ export default function PrivateFundDashboard({
   const totalPnlDollar = portfolioAssets.reduce((s, a) => s + a.pnlDollar, 0);
   const totalPnlPct = totalDeployed > 0 ? (totalPnlDollar / totalDeployed) * 100 : 0;
   const currentPortfolioValue = totalDeployed + totalPnlDollar;
+  // ↑ used by the summary banner above; live component recalculates with real-time prices
 
   const hasData = !!privateData;
 
@@ -469,77 +471,16 @@ export default function PrivateFundDashboard({
               </section>
             )}
 
-            {/* Positions table */}
-            {portfolioAssets.length > 0 && (
+            {/* Positions table — live prices */}
+            {portfolioAssets.length > 0 && positions && (
               <section>
-                <SectionHeader title="Positions" subtitle={`execution ${positions?.executionDate ?? latestRebalanceDate}`} />
-                <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#2d3144]">
-                        <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">#</th>
-                        <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">Asset</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Weight</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Exec Price</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Curr Price</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Amount</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Allocated $</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">P&amp;L $</th>
-                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Return %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {portfolioAssets.map((a, i) => (
-                        <tr key={a.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                          <td className="px-4 py-2.5 text-gray-600 text-xs">{i + 1}</td>
-                          <td className="px-4 py-2.5 text-gray-200 font-medium">{a.name}</td>
-                          <td className="px-4 py-2.5 text-right font-mono text-purple-300 text-xs">
-                            {a.weight.toFixed(2)}%
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-gray-400 text-xs">
-                            ${a.executionPrice.toLocaleString("en-US", { minimumFractionDigits: a.executionPrice < 1 ? 4 : 2, maximumFractionDigits: a.executionPrice < 1 ? 4 : 2 })}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-gray-200 text-xs">
-                            ${a.currentPrice.toLocaleString("en-US", { minimumFractionDigits: a.currentPrice < 1 ? 4 : 2, maximumFractionDigits: a.currentPrice < 1 ? 4 : 2 })}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-gray-400 text-xs">
-                            {a.amount.toLocaleString("en-US", { maximumFractionDigits: 4 })}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-gray-300 text-xs">
-                            ${a.allocation.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono font-medium text-xs"
-                            style={{ color: a.pnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
-                            {a.pnlDollar >= 0 ? "+" : ""}${Math.abs(a.pnlDollar).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </td>
-                          <td className="px-4 py-2.5 text-right font-mono font-medium text-xs"
-                            style={{ color: a.totalReturn >= 0 ? "#4ade80" : "#f87171" }}>
-                            {a.totalReturn >= 0 ? "+" : ""}{a.totalReturn.toFixed(2)}%
-                          </td>
-                        </tr>
-                      ))}
-                      {/* Totals row */}
-                      <tr className="border-t-2 border-[#3d4166] bg-[#ffffff04]">
-                        <td className="px-4 py-2.5" />
-                        <td className="px-4 py-2.5 text-gray-300 font-semibold text-xs">Total</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-purple-300 text-xs font-medium">
-                          {portfolioAssets.reduce((s, a) => s + a.weight, 0).toFixed(1)}%
-                        </td>
-                        <td colSpan={3} />
-                        <td className="px-4 py-2.5 text-right font-mono text-gray-200 text-xs font-medium">
-                          ${totalDeployed.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-mono font-bold text-xs"
-                          style={{ color: totalPnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
-                          {totalPnlDollar >= 0 ? "+" : ""}${Math.abs(totalPnlDollar).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-mono font-bold text-xs"
-                          style={{ color: totalPnlPct >= 0 ? "#4ade80" : "#f87171" }}>
-                          {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(2)}%
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <SectionHeader title="Positions" subtitle={`execution ${positions.executionDate}`} />
+                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]">
+                  <PrivateFundPositionsLive
+                    assets={portfolioAssets}
+                    totalDeployed={positions.totalDeployed}
+                    executionDate={positions.executionDate}
+                  />
                 </div>
               </section>
             )}
