@@ -1,12 +1,14 @@
-import type { StrategyData, AssetData } from "@/lib/types";
-import type { ChartPoint, MetricsSummary, AssetPerfEntry } from "@/lib/privateFundTypes";
-import type { PositionsData } from "@/lib/loadPositions";
+"use client";
+
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
+import type { StrategyData, AssetData } from "@/lib/types";
+import type { PositionsData } from "@/lib/loadPositions";
+import type { ChartPoint, AssetPerfEntry, MetricsSummary } from "@/lib/privateFundTypes";
 import Nav from "./Nav";
 
 const PrivateFundIndexChart = dynamic(() => import("./PrivateFundIndexChart"), { ssr: false });
 const PrivateFundAssetPerf = dynamic(() => import("./PrivateFundAssetPerf"), { ssr: false });
-const PrivateFundPositionsLive = dynamic(() => import("./PrivateFundPositionsLive"), { ssr: false });
 
 interface Props {
   privateData: StrategyData | undefined;
@@ -17,36 +19,16 @@ interface Props {
   latestRebalanceDate: string;
 }
 
-function computeMetrics(
-  label: string,
-  color: string,
-  dailyReturns: number[],
-  numDays: number,
-): MetricsSummary {
-  if (dailyReturns.length === 0) {
-    return { label, color, totalReturn: 0, sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0 };
-  }
+type PriceMap = Record<string, number>;
 
-  const n = dailyReturns.length;
-  const mean = dailyReturns.reduce((a, b) => a + b, 0) / n;
-  const variance = dailyReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
-  const std = Math.sqrt(variance);
-  const sharpe = std > 0 && n >= 30 ? parseFloat(((mean / std) * Math.sqrt(252)).toFixed(2)) : null;
-  const totalReturn = parseFloat(((dailyReturns.reduce((acc, r) => acc * (1 + r), 1) - 1) * 100).toFixed(2));
-  const annReturn = parseFloat((((1 + totalReturn / 100) ** (365 / numDays) - 1) * 100).toFixed(2));
-  const volatility = parseFloat((std * Math.sqrt(252) * 100).toFixed(2));
+function fmtPrice(p: number): string {
+  if (p >= 1000) return p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (p >= 1) return p.toFixed(3);
+  return p.toFixed(6);
+}
 
-  let peak = 1;
-  let maxDD = 0;
-  let cum = 1;
-  for (const r of dailyReturns) {
-    cum *= 1 + r;
-    if (cum > peak) peak = cum;
-    const dd = ((peak - cum) / peak) * 100;
-    if (dd > maxDD) maxDD = dd;
-  }
-
-  return { label, color, totalReturn, sharpe, maxDrawdown: parseFloat(maxDD.toFixed(2)), annReturn, volatility };
+function fmtUsd(n: number, decimals = 0): string {
+  return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 export default function PrivateFundDashboard({
@@ -57,113 +39,163 @@ export default function PrivateFundDashboard({
   lastUpdated,
   latestRebalanceDate,
 }: Props) {
-  const positionMap = new Map((positions?.positions ?? []).map((p) => [p.id, p]));
-  // --- Chart series (all normalized to base 1000) ---
-  const dateMap = new Map<string, ChartPoint>();
+  const [livePrices, setLivePrices] = useState<PriceMap | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastFetched, setLastFetched] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Base day May 1st
-  dateMap.set("2026-05-01", { date: "2026-05-01", index: 1000, combined: 1000 });
-
-  let combinedValue = 1000;
-  const indexDailyReturns: number[] = [];
-  const combinedDailyReturns: number[] = [];
-
-  if (privateData) {
-    for (const d of privateData.dailyData) {
-      if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
-      const point = dateMap.get(d.date)!;
-      point.index = d.cumReturn * 1000;
-      indexDailyReturns.push(d.return);
-
-      const cr = 0.5 * d.return;
-      combinedDailyReturns.push(cr);
-      combinedValue *= 1 + cr;
-      point.combined = parseFloat(combinedValue.toFixed(4));
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await fetch("/api/prices");
+      if (!res.ok) throw new Error("API error");
+      const data = (await res.json()) as { prices: PriceMap; timestamp: string };
+      setLivePrices(data.prices);
+      setLastFetched(
+        new Date(data.timestamp).toLocaleTimeString([], {
+          hour: "2-digit", minute: "2-digit", second: "2-digit",
+        }),
+      );
+    } catch {
+      setFetchError("Could not fetch live prices");
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
-  if (btcData) {
-    for (const d of btcData.dailyData) {
-      if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
-      dateMap.get(d.date)!.btc = parseFloat((d.cumReturn * 1000).toFixed(4));
-    }
-  }
+  useEffect(() => { refresh(); }, [refresh]);
 
-  const chartSeries: ChartPoint[] = Array.from(dateMap.values()).sort((a, b) =>
-    a.date.localeCompare(b.date),
+  const positionMap = useMemo(
+    () => new Map((positions?.positions ?? []).map((p) => [p.id, p])),
+    [positions],
   );
 
-  const numDays = privateData?.metrics?.numDays ?? indexDailyReturns.length;
-
-  // BTC daily returns from cumReturn
-  const btcDailyReturns: number[] = [];
-  if (btcData && btcData.dailyData.length > 1) {
-    for (let i = 1; i < btcData.dailyData.length; i++) {
-      btcDailyReturns.push(btcData.dailyData[i].cumReturn / btcData.dailyData[i - 1].cumReturn - 1);
-    }
-  }
-
-  const indexMetrics: MetricsSummary =
-    privateData && privateData.metrics
-      ? {
-          label: "Private Fund Index",
-          color: "#8b5cf6",
-          totalReturn: privateData.metrics.totalReturn,
-          sharpe: numDays >= 30 ? privateData.metrics.sharpe : null,
-          maxDrawdown: privateData.metrics.maxDrawdown,
-          annReturn: privateData.metrics.annReturn,
-          volatility: privateData.metrics.annVolatility,
-        }
-      : computeMetrics("Private Fund Index", "#8b5cf6", indexDailyReturns, numDays);
-
-  const btcMetrics = computeMetrics("Bitcoin", "#f97316", btcDailyReturns, btcDailyReturns.length || numDays);
-
-  const combinedMetrics = computeMetrics(
-    "Index + Signal (50/50)",
-    "#06b6d4",
-    combinedDailyReturns,
-    numDays,
-  );
-
-  const allMetrics = [indexMetrics, combinedMetrics, btcMetrics];
-
-  // --- Portfolio asset performance (anchored to execution prices) ---
-  const portfolioAssets: AssetPerfEntry[] = (privateData?.latestWeights ?? [])
-    .map((w) => {
-      const assetData = allAssets[w.coin];
-      if (!assetData || assetData.dailyData.length === 0) return null;
-      const lastCumReturn = assetData.dailyData[assetData.dailyData.length - 1].cumReturn;
+  // Per-asset computation — live prices when available, cumReturn fallback
+  const portfolioAssets = useMemo((): AssetPerfEntry[] => {
+    return (privateData?.latestWeights ?? []).flatMap((w) => {
       const pos = positionMap.get(w.coin);
+      const assetData = allAssets[w.coin];
       const executionPrice = pos?.executionPrice ?? 0;
       const amount = pos?.amount ?? 0;
       const allocation = pos?.allocation ?? 0;
-      // current price estimated as executionPrice × cumReturn (May 1st cumReturn = 1.0 = execution day)
-      const currentPrice = executionPrice * lastCumReturn;
-      const totalReturn = parseFloat(((lastCumReturn - 1) * 100).toFixed(2));
-      const pnlDollar = parseFloat((allocation * (lastCumReturn - 1)).toFixed(2));
-      const displayName = assetData.displayName || w.coin.toUpperCase();
-      return {
+      if (!executionPrice && !allocation) return [];
+
+      let currentPrice: number;
+      let totalReturn: number;
+      let pnlDollar: number;
+
+      const livePrice = livePrices?.[w.coin];
+      if (livePrice && executionPrice > 0) {
+        currentPrice = livePrice;
+        totalReturn = (livePrice / executionPrice - 1) * 100;
+        pnlDollar = amount * (livePrice - executionPrice);
+      } else if (assetData?.dailyData.length) {
+        const cumReturn = assetData.dailyData[assetData.dailyData.length - 1].cumReturn;
+        currentPrice = executionPrice * cumReturn;
+        totalReturn = (cumReturn - 1) * 100;
+        pnlDollar = allocation * (cumReturn - 1);
+      } else {
+        currentPrice = executionPrice;
+        totalReturn = 0;
+        pnlDollar = 0;
+      }
+
+      return [{
         id: w.coin,
-        name: displayName,
+        name: assetData?.displayName ?? w.coin.toUpperCase(),
         weight: w.weight,
-        totalReturn,
+        totalReturn: parseFloat(totalReturn.toFixed(2)),
         executionPrice,
-        currentPrice: parseFloat(currentPrice.toFixed(executionPrice < 1 ? 6 : executionPrice < 10 ? 4 : 2)),
+        currentPrice: parseFloat(currentPrice.toFixed(currentPrice < 1 ? 6 : 2)),
         amount,
         allocation,
-        pnlDollar,
-      };
-    })
-    .filter(Boolean) as AssetPerfEntry[];
-
-  // Weekly top movers — sorted by return
-  const topMovers = [...portfolioAssets].sort((a, b) => b.totalReturn - a.totalReturn);
+        pnlDollar: parseFloat(pnlDollar.toFixed(2)),
+      }];
+    });
+  }, [privateData, allAssets, positionMap, livePrices]);
 
   const totalDeployed = positions?.totalDeployed ?? 0;
   const totalPnlDollar = portfolioAssets.reduce((s, a) => s + a.pnlDollar, 0);
   const totalPnlPct = totalDeployed > 0 ? (totalPnlDollar / totalDeployed) * 100 : 0;
-  const currentPortfolioValue = totalDeployed + totalPnlDollar;
-  // ↑ used by the summary banner above; live component recalculates with real-time prices
+  const portfolioLiveReturn = totalPnlPct / 100;
+  const isLive = livePrices !== null;
+
+  // Metrics
+  const btcPos = positionMap.get("bitcoin");
+  const btcLive = livePrices?.["bitcoin"];
+  const btcReturn = btcPos && btcLive
+    ? btcLive / btcPos.executionPrice - 1
+    : (btcData?.dailyData.at(-1)?.cumReturn ?? 1) - 1;
+
+  const allMetrics: MetricsSummary[] = [
+    {
+      label: "Private Fund Index",
+      color: "#8b5cf6",
+      totalReturn: parseFloat((portfolioLiveReturn * 100).toFixed(2)),
+      sharpe: null,
+      maxDrawdown: privateData?.metrics?.maxDrawdown ?? 0,
+      annReturn: 0,
+      volatility: privateData?.metrics?.annVolatility ?? 0,
+    },
+    {
+      label: "Index + Signal (50/50)",
+      color: "#06b6d4",
+      totalReturn: parseFloat((portfolioLiveReturn * 50).toFixed(2)),
+      sharpe: null,
+      maxDrawdown: 0,
+      annReturn: 0,
+      volatility: 0,
+    },
+    {
+      label: "Bitcoin",
+      color: "#f97316",
+      totalReturn: parseFloat((btcReturn * 100).toFixed(2)),
+      sharpe: null,
+      maxDrawdown: 0,
+      annReturn: 0,
+      volatility: 0,
+    },
+  ];
+
+  // Chart series: historical from performance.json + live point for today
+  const chartSeries = useMemo((): ChartPoint[] => {
+    const dateMap = new Map<string, ChartPoint>();
+    dateMap.set("2026-05-01", { date: "2026-05-01", index: 1000, combined: 1000 });
+
+    let combinedValue = 1000;
+    if (privateData) {
+      for (const d of privateData.dailyData) {
+        if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
+        const pt = dateMap.get(d.date)!;
+        pt.index = d.cumReturn * 1000;
+        combinedValue *= 1 + 0.5 * d.return;
+        pt.combined = parseFloat(combinedValue.toFixed(4));
+      }
+    }
+    if (btcData) {
+      for (const d of btcData.dailyData) {
+        if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
+        dateMap.get(d.date)!.btc = parseFloat((d.cumReturn * 1000).toFixed(4));
+      }
+    }
+    // Live point
+    if (isLive) {
+      const today = new Date().toISOString().split("T")[0];
+      if (!dateMap.has(today)) dateMap.set(today, { date: today });
+      const pt = dateMap.get(today)!;
+      pt.index = parseFloat((1000 * (1 + portfolioLiveReturn)).toFixed(4));
+      pt.combined = parseFloat((1000 * (1 + 0.5 * portfolioLiveReturn)).toFixed(4));
+      if (btcPos && btcLive) pt.btc = parseFloat((1000 * (btcLive / btcPos.executionPrice)).toFixed(4));
+    }
+
+    return Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }, [privateData, btcData, isLive, portfolioLiveReturn, btcPos, btcLive]);
+
+  const topMovers = useMemo(
+    () => [...portfolioAssets].sort((a, b) => b.totalReturn - a.totalReturn),
+    [portfolioAssets],
+  );
 
   const hasData = !!privateData;
 
@@ -174,19 +206,39 @@ export default function PrivateFundDashboard({
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Private Fund Strategy</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="text-right text-sm">
-              {lastUpdated && (
-                <div className="text-gray-400">
-                  Updated <span className="text-white font-medium">{lastUpdated}</span>
+              {lastFetched && (
+                <div className="flex items-center gap-1.5 justify-end text-gray-400 text-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Live · {lastFetched}
                 </div>
               )}
-              {latestRebalanceDate && (
-                <div className="text-gray-400">
-                  Last rebalance <span className="text-white font-medium">{latestRebalanceDate}</span>
-                </div>
+              {fetchError && <div className="text-red-400 text-xs">{fetchError}</div>}
+              {lastUpdated && (
+                <div className="text-gray-600 text-xs">Data updated {lastUpdated}</div>
               )}
             </div>
+            <button
+              onClick={refresh}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              style={{
+                background: loading ? "#2d3144" : "#8b5cf622",
+                border: "1px solid #8b5cf644",
+                color: loading ? "#6b7280" : "#a78bfa",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              <svg
+                className={loading ? "animate-spin" : ""}
+                width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+              {loading ? "Fetching…" : "Refresh"}
+            </button>
             <Nav />
           </div>
         </div>
@@ -197,44 +249,47 @@ export default function PrivateFundDashboard({
           <div className="text-center py-24 text-gray-400">No performance data yet.</div>
         ) : (
           <>
-            {/* Portfolio dollar summary */}
+            {/* Portfolio summary banner */}
             {positions && (
               <section>
-                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144] flex flex-wrap gap-6">
+                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144] flex flex-wrap gap-6 items-end">
                   <div>
                     <div className="text-xs text-gray-500 mb-1">Deployed Capital</div>
                     <div className="text-xl font-bold text-white font-mono">
-                      ${totalDeployed.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      ${fmtUsd(totalDeployed)}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 mb-1">Current Value</div>
                     <div className="text-xl font-bold text-white font-mono">
-                      ${currentPortfolioValue.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      ${fmtUsd(totalDeployed + totalPnlDollar)}
                     </div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 mb-1">Total P&amp;L</div>
                     <div className="text-xl font-bold font-mono" style={{ color: totalPnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
-                      {totalPnlDollar >= 0 ? "+" : ""}${Math.abs(totalPnlDollar).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      {totalPnlDollar >= 0 ? "+" : "−"}${fmtUsd(Math.abs(totalPnlDollar))}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500 mb-1">Return %</div>
+                    <div className="text-xs text-gray-500 mb-1">Return {isLive ? "(live)" : "(eod)"}</div>
                     <div className="text-xl font-bold font-mono" style={{ color: totalPnlPct >= 0 ? "#4ade80" : "#f87171" }}>
                       {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(2)}%
                     </div>
                   </div>
-                  <div className="text-xs text-gray-600 self-end ml-auto">
+                  <div className="ml-auto text-xs text-gray-600 self-end">
                     execution: {positions.executionDate}
                   </div>
                 </div>
               </section>
             )}
 
-            {/* Metric cards */}
+            {/* Performance metric cards */}
             <section>
-              <SectionHeader title="Performance Comparison" subtitle="since May 1, 2026 · base 1000" />
+              <SectionHeader
+                title="Performance Comparison"
+                subtitle={`since ${positions?.executionDate ?? latestRebalanceDate} · ${isLive ? "live prices" : "end-of-day"}`}
+              />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {allMetrics.map((m) => (
                   <div
@@ -242,43 +297,21 @@ export default function PrivateFundDashboard({
                     className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]"
                     style={{ borderLeftWidth: 3, borderLeftColor: m.color }}
                   >
-                    <div className="text-xs mb-1" style={{ color: m.color }}>
-                      {m.label}
-                    </div>
-                    <div
-                      className="text-2xl font-bold"
-                      style={{ color: m.totalReturn >= 0 ? "#4ade80" : "#f87171" }}
-                    >
-                      {m.totalReturn >= 0 ? "+" : ""}
-                      {m.totalReturn.toFixed(2)}%
+                    <div className="text-xs mb-1" style={{ color: m.color }}>{m.label}</div>
+                    <div className="text-2xl font-bold" style={{ color: m.totalReturn >= 0 ? "#4ade80" : "#f87171" }}>
+                      {m.totalReturn >= 0 ? "+" : ""}{m.totalReturn.toFixed(2)}%
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5">Total Return</div>
                     <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                       <div>
                         <div className="text-gray-500">Sharpe</div>
-                        <div className="text-white font-mono font-medium">
-                          {m.sharpe?.toFixed(2) ?? "—"}
-                        </div>
+                        <div className="text-gray-500 font-mono">— <span className="text-gray-700">(30d min)</span></div>
                       </div>
                       <div>
                         <div className="text-gray-500">Max DD</div>
-                        <div className="text-red-400 font-mono font-medium">
+                        <div className="text-red-400 font-mono">
                           {m.maxDrawdown > 0 ? `-${m.maxDrawdown.toFixed(2)}%` : "0%"}
                         </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Ann. Return</div>
-                        <div
-                          className="font-mono font-medium"
-                          style={{ color: m.annReturn >= 0 ? "#4ade80" : "#f87171" }}
-                        >
-                          {m.annReturn >= 0 ? "+" : ""}
-                          {m.annReturn.toFixed(1)}%
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Ann. Vol</div>
-                        <div className="text-gray-300 font-mono font-medium">{m.volatility.toFixed(1)}%</div>
                       </div>
                     </div>
                   </div>
@@ -286,7 +319,7 @@ export default function PrivateFundDashboard({
               </div>
             </section>
 
-            {/* Index 1000 chart */}
+            {/* Chart */}
             <section>
               <SectionHeader
                 title="Index Performance (Base 1000)"
@@ -297,80 +330,12 @@ export default function PrivateFundDashboard({
               </div>
             </section>
 
-            {/* Metrics comparison table */}
-            <section>
-              <SectionHeader title="Metrics Comparison" />
-              <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#2d3144]">
-                      <th className="text-left px-4 py-3 text-gray-400 font-medium">Metric</th>
-                      {allMetrics.map((m) => (
-                        <th
-                          key={m.label}
-                          className="text-right px-4 py-3 font-medium"
-                          style={{ color: m.color }}
-                        >
-                          {m.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      {
-                        label: "Total Return",
-                        fmt: (m: MetricsSummary) =>
-                          `${m.totalReturn >= 0 ? "+" : ""}${m.totalReturn.toFixed(2)}%`,
-                        color: (m: MetricsSummary) => (m.totalReturn >= 0 ? "#4ade80" : "#f87171"),
-                      },
-                      {
-                        label: "Ann. Return",
-                        fmt: (m: MetricsSummary) =>
-                          `${m.annReturn >= 0 ? "+" : ""}${m.annReturn.toFixed(1)}%`,
-                        color: (m: MetricsSummary) => (m.annReturn >= 0 ? "#4ade80" : "#f87171"),
-                      },
-                      {
-                        label: "Sharpe Ratio",
-                        fmt: (m: MetricsSummary) => m.sharpe?.toFixed(2) ?? "—",
-                        color: () => "#d1d5db",
-                      },
-                      {
-                        label: "Max Drawdown",
-                        fmt: (m: MetricsSummary) =>
-                          m.maxDrawdown > 0 ? `-${m.maxDrawdown.toFixed(2)}%` : "0%",
-                        color: () => "#f87171",
-                      },
-                      {
-                        label: "Ann. Volatility",
-                        fmt: (m: MetricsSummary) => `${m.volatility.toFixed(1)}%`,
-                        color: () => "#9ca3af",
-                      },
-                    ].map((row) => (
-                      <tr key={row.label} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                        <td className="px-4 py-2.5 text-gray-400">{row.label}</td>
-                        {allMetrics.map((m) => (
-                          <td
-                            key={m.label}
-                            className="px-4 py-2.5 text-right font-mono font-medium"
-                            style={{ color: row.color(m) }}
-                          >
-                            {row.fmt(m)}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
             {/* Individual asset performance */}
             {portfolioAssets.length > 0 && (
               <section>
                 <SectionHeader
                   title="Individual Asset Performance"
-                  subtitle="portfolio holdings · % return since May 1"
+                  subtitle={`% return from execution price${isLive ? " · live" : " · eod"}`}
                 />
                 <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]">
                   <PrivateFundAssetPerf assets={portfolioAssets} />
@@ -378,109 +343,121 @@ export default function PrivateFundDashboard({
               </section>
             )}
 
-            {/* Weekly top movers */}
+            {/* Top movers */}
             {topMovers.length > 0 && (
               <section>
                 <SectionHeader
                   title="Top Movers Within Signal"
-                  subtitle="private fund holdings · ranked by return since May 1"
+                  subtitle={`ranked by return from execution price${isLive ? " · live" : " · eod"}`}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Top gainers */}
-                  <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-[#2d3144] flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="text-sm font-medium text-green-400">Top Gainers</span>
-                    </div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[#2d3144]">
-                          <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">#</th>
-                          <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">Asset</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Weight</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">P&amp;L $</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Return</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {topMovers.slice(0, 7).map((a, i) => (
-                          <tr key={a.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                            <td className="px-4 py-2 text-gray-600 text-xs">{i + 1}</td>
-                            <td className="px-4 py-2 text-gray-200">{a.name}</td>
-                            <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">
-                              {a.weight.toFixed(1)}%
-                            </td>
-                            <td className="px-4 py-2 text-right font-mono font-medium text-xs"
-                              style={{ color: a.pnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
-                              {a.pnlDollar >= 0 ? "+" : ""}${Math.abs(a.pnlDollar).toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                            </td>
-                            <td
-                              className="px-4 py-2 text-right font-mono font-medium"
-                              style={{ color: a.totalReturn >= 0 ? "#4ade80" : "#f87171" }}
-                            >
-                              {a.totalReturn >= 0 ? "+" : ""}
-                              {a.totalReturn.toFixed(2)}%
-                            </td>
+                  {[
+                    { label: "Top Gainers", color: "#4ade80", data: topMovers.slice(0, 8) },
+                    { label: "Laggards", color: "#f87171", data: [...topMovers].reverse().slice(0, 8) },
+                  ].map(({ label, color, data }) => (
+                    <div key={label} className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-hidden">
+                      <div className="px-4 py-3 border-b border-[#2d3144] flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+                        <span className="text-sm font-medium" style={{ color }}>{label}</span>
+                      </div>
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-[#2d3144]">
+                            <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">#</th>
+                            <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">Asset</th>
+                            <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Weight</th>
+                            <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">P&amp;L $</th>
+                            <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Return</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Bottom performers */}
-                  <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-[#2d3144] flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-400" />
-                      <span className="text-sm font-medium text-red-400">Laggards</span>
+                        </thead>
+                        <tbody>
+                          {data.map((a, i) => (
+                            <tr key={a.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
+                              <td className="px-4 py-2 text-gray-600 text-xs">{i + 1}</td>
+                              <td className="px-4 py-2 text-gray-200">{a.name}</td>
+                              <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">{a.weight.toFixed(1)}%</td>
+                              <td className="px-4 py-2 text-right font-mono font-medium text-xs" style={{ color: a.pnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
+                                {a.pnlDollar >= 0 ? "+" : "−"}${fmtUsd(Math.abs(a.pnlDollar))}
+                              </td>
+                              <td className="px-4 py-2 text-right font-mono font-medium text-xs" style={{ color: a.totalReturn >= 0 ? "#4ade80" : "#f87171" }}>
+                                {a.totalReturn >= 0 ? "+" : ""}{a.totalReturn.toFixed(2)}%
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[#2d3144]">
-                          <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">#</th>
-                          <th className="text-left px-4 py-2 text-gray-500 font-medium text-xs">Asset</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Weight</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">P&amp;L $</th>
-                          <th className="text-right px-4 py-2 text-gray-500 font-medium text-xs">Return</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...topMovers].reverse().slice(0, 7).map((a, i) => (
-                          <tr key={a.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                            <td className="px-4 py-2 text-gray-600 text-xs">{i + 1}</td>
-                            <td className="px-4 py-2 text-gray-200">{a.name}</td>
-                            <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">
-                              {a.weight.toFixed(1)}%
-                            </td>
-                            <td className="px-4 py-2 text-right font-mono font-medium text-xs"
-                              style={{ color: a.pnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
-                              {a.pnlDollar >= 0 ? "+" : ""}${Math.abs(a.pnlDollar).toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                            </td>
-                            <td
-                              className="px-4 py-2 text-right font-mono font-medium"
-                              style={{ color: a.totalReturn >= 0 ? "#4ade80" : "#f87171" }}
-                            >
-                              {a.totalReturn >= 0 ? "+" : ""}
-                              {a.totalReturn.toFixed(2)}%
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  ))}
                 </div>
               </section>
             )}
 
-            {/* Positions table — live prices */}
+            {/* Positions table */}
             {portfolioAssets.length > 0 && positions && (
               <section>
                 <SectionHeader title="Positions" subtitle={`execution ${positions.executionDate}`} />
-                <div className="bg-[#1a1d29] rounded-xl p-4 border border-[#2d3144]">
-                  <PrivateFundPositionsLive
-                    assets={portfolioAssets}
-                    totalDeployed={positions.totalDeployed}
-                    executionDate={positions.executionDate}
-                  />
+                <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#2d3144]">
+                        <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">#</th>
+                        <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">Asset</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Weight</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Exec Price</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Live Price</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Amount</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Allocated $</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">P&amp;L $</th>
+                        <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Return %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {portfolioAssets.map((a, i) => (
+                        <tr key={a.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
+                          <td className="px-4 py-2.5 text-gray-600 text-xs">{i + 1}</td>
+                          <td className="px-4 py-2.5 text-gray-200 font-medium">
+                            {a.name}
+                            {isLive && livePrices?.[a.id] && (
+                              <span className="ml-1.5 w-1 h-1 rounded-full bg-green-400 inline-block align-middle" />
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-purple-300 text-xs">{a.weight.toFixed(2)}%</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-gray-500 text-xs">${fmtPrice(a.executionPrice)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-xs" style={{ color: isLive && livePrices?.[a.id] ? "#f1f5f9" : "#4b5563" }}>
+                            {isLive && livePrices?.[a.id] ? `$${fmtPrice(a.currentPrice)}` : "—"}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-gray-500 text-xs">
+                            {a.amount.toLocaleString("en-US", { maximumFractionDigits: 4 })}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-gray-400 text-xs">${fmtUsd(a.allocation)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono font-medium text-xs" style={{ color: a.pnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
+                            {a.pnlDollar >= 0 ? "+" : "−"}${fmtUsd(Math.abs(a.pnlDollar))}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono font-medium text-xs" style={{ color: a.totalReturn >= 0 ? "#4ade80" : "#f87171" }}>
+                            {a.totalReturn >= 0 ? "+" : ""}{a.totalReturn.toFixed(2)}%
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-[#3d4166] bg-[#ffffff04]">
+                        <td className="px-4 py-2.5" />
+                        <td className="px-4 py-2.5 text-gray-300 font-semibold text-xs">Total</td>
+                        <td className="px-4 py-2.5 text-right font-mono text-purple-300 text-xs font-medium">
+                          {portfolioAssets.reduce((s, a) => s + a.weight, 0).toFixed(1)}%
+                        </td>
+                        <td colSpan={3} />
+                        <td className="px-4 py-2.5 text-right font-mono text-gray-200 text-xs font-medium">${fmtUsd(totalDeployed)}</td>
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-xs" style={{ color: totalPnlDollar >= 0 ? "#4ade80" : "#f87171" }}>
+                          {totalPnlDollar >= 0 ? "+" : "−"}${fmtUsd(Math.abs(totalPnlDollar))}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-xs" style={{ color: totalPnlPct >= 0 ? "#4ade80" : "#f87171" }}>
+                          {totalPnlPct >= 0 ? "+" : ""}{totalPnlPct.toFixed(2)}%
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div className="px-4 py-2 text-xs text-gray-600">
+                    Crypto via CoinGecko · Stocks via Yahoo Finance · execution: {positions.executionDate}
+                  </div>
                 </div>
               </section>
             )}
