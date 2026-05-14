@@ -180,32 +180,32 @@ const STRAT_GROUPS: StrategyGroupDef[] = [
 interface AssetBreakdownRow {
   id: string;
   name: string;
-  weightPct: number;
-  returnPct: number;
-  contribution: number;
+  weightPct: number;           // raw weight from CSV × 100 (matches source file)
+  returnPct: number | null;    // null when asset not in performance data
+  contribution: number | null; // raw weight × return (null when return unavailable)
+  available: boolean;
 }
 
+// Uses raw (non-normalized) weights so numbers match the source CSV directly.
+// Missing assets (e.g. sky, aave, sui) appear as grayed-out rows.
 function computeAssetBreakdown(
   weights: Record<string, number>,
   allAssets: Record<string, AssetData>,
 ): AssetBreakdownRow[] {
-  const availableWeightSum = Object.entries(weights).reduce(
-    (sum, [id, w]) => sum + (allAssets[id] ? w : 0),
-    0,
-  );
-  if (availableWeightSum === 0) return [];
   return Object.entries(weights)
-    .filter(([id, w]) => allAssets[id] && w > 0)
+    .filter(([, w]) => w > 0)
     .map(([id, w]) => {
-      const normW = w / availableWeightSum;
-      const lastData = allAssets[id]?.dailyData.at(-1);
-      const returnPct = lastData ? (lastData.cumReturn - 1) * 100 : 0;
+      const asset = allAssets[id];
+      const lastData = asset?.dailyData.at(-1);
+      const returnPct = lastData ? parseFloat(((lastData.cumReturn - 1) * 100).toFixed(2)) : null;
+      const weightPct = parseFloat((w * 100).toFixed(2));
       return {
         id,
-        name: allAssets[id]?.displayName ?? id,
-        weightPct: parseFloat((normW * 100).toFixed(2)),
-        returnPct: parseFloat(returnPct.toFixed(2)),
-        contribution: parseFloat((normW * returnPct).toFixed(3)),
+        name: asset?.displayName ?? id,
+        weightPct,
+        returnPct,
+        contribution: returnPct !== null ? parseFloat((w * returnPct).toFixed(3)) : null,
+        available: !!asset,
       };
     })
     .sort((a, b) => b.weightPct - a.weightPct);
@@ -371,8 +371,13 @@ export default function PrivateFundDashboard({
     [activeStratWeights.weights, allAssets],
   );
 
+  const breakdownTotalWeight = useMemo(
+    () => parseFloat(assetBreakdown.filter((r) => r.available).reduce((s, r) => s + r.weightPct, 0).toFixed(2)),
+    [assetBreakdown],
+  );
+
   const breakdownTotalReturn = useMemo(
-    () => parseFloat(assetBreakdown.reduce((s, r) => s + r.contribution, 0).toFixed(2)),
+    () => parseFloat(assetBreakdown.reduce((s, r) => s + (r.contribution ?? 0), 0).toFixed(3)),
     [assetBreakdown],
   );
 
@@ -788,28 +793,43 @@ export default function PrivateFundDashboard({
                     </tr>
                   </thead>
                   <tbody>
-                    {assetBreakdown.map((row, i) => (
-                      <tr key={row.id} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                        <td className="px-4 py-2.5 text-gray-600 text-xs">{i + 1}</td>
-                        <td className="px-4 py-2.5 text-gray-200 font-medium">{row.name}</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-xs" style={{ color: activeStratWeights.stage?.color ?? "#9ca3af" }}>
-                          {row.weightPct.toFixed(2)}%
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-mono font-medium text-xs"
-                          style={{ color: row.returnPct >= 0 ? "#4ade80" : "#f87171" }}>
-                          {row.returnPct >= 0 ? "+" : ""}{row.returnPct.toFixed(2)}%
-                        </td>
-                        <td className="px-4 py-2.5 text-right font-mono text-xs"
-                          style={{ color: row.contribution >= 0 ? "#86efac" : "#fca5a5" }}>
-                          {row.contribution >= 0 ? "+" : ""}{row.contribution.toFixed(3)}%
-                        </td>
-                      </tr>
-                    ))}
+                    {assetBreakdown.map((row, i) => {
+                      const availIdx = assetBreakdown.slice(0, i).filter((r) => r.available).length;
+                      return (
+                        <tr
+                          key={row.id}
+                          className="border-b border-[#2d3144] hover:bg-[#ffffff04]"
+                          style={{ opacity: row.available ? 1 : 0.38 }}
+                        >
+                          <td className="px-4 py-2.5 text-gray-600 text-xs">
+                            {row.available ? availIdx + 1 : "—"}
+                          </td>
+                          <td className="px-4 py-2.5 font-medium text-xs" style={{ color: row.available ? "#e5e7eb" : "#6b7280" }}>
+                            {row.name}
+                            {!row.available && (
+                              <span className="ml-1.5 text-xs text-gray-600 font-normal">(no data)</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-xs"
+                            style={{ color: row.available ? (activeStratWeights.stage?.color ?? "#9ca3af") : "#4b5563" }}>
+                            {row.weightPct.toFixed(2)}%
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono font-medium text-xs"
+                            style={{ color: row.returnPct === null ? "#4b5563" : row.returnPct >= 0 ? "#4ade80" : "#f87171" }}>
+                            {row.returnPct === null ? "—" : `${row.returnPct >= 0 ? "+" : ""}${row.returnPct.toFixed(2)}%`}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-xs"
+                            style={{ color: row.contribution === null ? "#4b5563" : row.contribution >= 0 ? "#86efac" : "#fca5a5" }}>
+                            {row.contribution === null ? "—" : `${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(3)}%`}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     <tr className="border-t-2 border-[#3d4166] bg-[#ffffff04]">
                       <td className="px-4 py-2.5" />
-                      <td className="px-4 py-2.5 text-gray-300 font-semibold text-xs">Total</td>
+                      <td className="px-4 py-2.5 text-gray-300 font-semibold text-xs">Available total</td>
                       <td className="px-4 py-2.5 text-right font-mono text-xs" style={{ color: activeStratWeights.stage?.color ?? "#9ca3af" }}>
-                        100.00%
+                        {breakdownTotalWeight.toFixed(2)}%
                       </td>
                       <td className="px-4 py-2.5" />
                       <td className="px-4 py-2.5 text-right font-mono font-bold text-xs"
@@ -820,7 +840,7 @@ export default function PrivateFundDashboard({
                   </tbody>
                 </table>
                 <div className="px-4 py-2 border-t border-[#2d3144] text-xs text-gray-600">
-                  End-of-day returns · weights renormalized for any missing assets · Contribution = weight × return
+                  Weights match source CSV directly · grayed rows = asset not in performance data · Contribution = raw weight × return (eod)
                 </div>
               </div>
             </section>
