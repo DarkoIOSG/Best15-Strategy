@@ -6,9 +6,10 @@ import type { StrategyData, AssetData } from "@/lib/types";
 import type { PositionsData } from "@/lib/loadPositions";
 import type { ChartPoint, AssetPerfEntry, MetricsSummary } from "@/lib/privateFundTypes";
 import {
-  MCAP_UNIV_MCAP_WEIGHTS, MCAP_UNIV_1N_WEIGHTS,
-  MCAP_WEIGHTS, VOLUME_WEIGHTS, LIQUIDITY_WEIGHTS,
-  LIQ_ETF_WEIGHTS, LIQ_QUALITY_WEIGHTS, LIQ_RISK_WEIGHTS,
+  MCAP_1N_WEIGHTS, LIQ_1N_WEIGHTS,
+  ETF_MCAP_BASE, ETF_MCAP_MINVAR, ETF_MCAP_PLUS_LIQ, ETF_MCAP_PLUS_TECH,
+  ETF_LIQ_BASE, ETF_LIQ_MINVAR, ETF_LIQ_PLUS_LIQ, ETF_LIQ_PLUS_TECH,
+  PF_BASE, PF_PLUS_SIZE, PF_PLUS_LIQ, PF_PLUS_TECH, PF_PLUS_QUALITY,
 } from "@/lib/benchmarkWeights";
 import Nav from "./Nav";
 import type { SeriesConfig } from "./PrivateFundIndexChart";
@@ -39,22 +40,31 @@ const ALWAYS_SERIES: SeriesConfig[] = [
   { key: "btc",      label: "Bitcoin",               color: "#f97316" },
 ];
 
-// Benchmark series per universe
-const MCAP_UNIV_SERIES: SeriesConfig[] = [
-  { key: "etf",      label: "ETF Weights",           color: "#f59e0b" },
-  { key: "quality",  label: "Quality Factor",        color: "#10b981" },
-  { key: "risk",     label: "Risk Factor",           color: "#ef4444" },
-  { key: "mcap_u",   label: "MCAP Weighted",         color: "#3b82f6" },
-  { key: "onn_u",    label: "1/N Equal",             color: "#ec4899" },
+// PF family — same data in both modes, same colors
+const PF_SERIES: SeriesConfig[] = [
+  { key: "pf_b",  label: "PF Base",        color: "#6ee7b7" },
+  { key: "pf_sz", label: "PF +Size",       color: "#34d399" },
+  { key: "pf_lq", label: "PF +Liquidity",  color: "#10b981" },
+  { key: "pf_tc", label: "PF +Tech",       color: "#059669" },
+  { key: "pf_ql", label: "PF +Quality",    color: "#047857" },
 ];
 
-const LIQ_UNIV_SERIES: SeriesConfig[] = [
-  { key: "etf_l",    label: "ETF Weights",           color: "#f59e0b" },
-  { key: "quality_l",label: "Quality Factor",        color: "#10b981" },
-  { key: "risk_l",   label: "Risk Factor",           color: "#ef4444" },
-  { key: "mcap_l",   label: "MCAP Weighted",         color: "#3b82f6" },
-  { key: "vol_l",    label: "Liquidity Weighted",    color: "#84cc16" },
-  { key: "onn_l",    label: "1/N Equal",             color: "#ec4899" },
+// ETF MCAP universe benchmarks
+const ETF_MCAP_SERIES: SeriesConfig[] = [
+  { key: "em_b",  label: "ETF Base",       color: "#fde68a" },
+  { key: "em_mv", label: "ETF MinVar",     color: "#fcd34d" },
+  { key: "em_lq", label: "ETF +Liq",       color: "#fbbf24" },
+  { key: "em_tc", label: "ETF +Tech",      color: "#f59e0b" },
+  { key: "onn_m", label: "1/N (MCAP)",     color: "#f472b6" },
+];
+
+// ETF Liquidity universe benchmarks
+const ETF_LIQ_SERIES: SeriesConfig[] = [
+  { key: "el_b",  label: "ETF Base",       color: "#bae6fd" },
+  { key: "el_mv", label: "ETF MinVar",     color: "#7dd3fc" },
+  { key: "el_lq", label: "ETF +Liq",       color: "#38bdf8" },
+  { key: "el_tc", label: "ETF +Tech",      color: "#0ea5e9" },
+  { key: "onn_l", label: "1/N (Liq)",      color: "#c084fc" },
 ];
 
 function fmtPrice(p: number): string {
@@ -67,12 +77,20 @@ function fmtUsd(n: number, decimals = 0): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+// Normalizes by available-weight sum so missing assets don't bias the result
 function computeWeightedSeries(
   weights: Record<string, number>,
   allAssets: Record<string, AssetData>,
 ): Map<string, number> {
   const result = new Map<string, number>();
   const assetDateMap = new Map<string, Map<string, number>>();
+
+  const availableWeightSum = Object.entries(weights).reduce(
+    (sum, [id, w]) => sum + (allAssets[id] ? w : 0),
+    0,
+  );
+  if (availableWeightSum === 0) return result;
+
   for (const id of Object.keys(weights)) {
     const data = allAssets[id];
     if (!data) continue;
@@ -86,7 +104,7 @@ function computeWeightedSeries(
     let val = 0;
     for (const [id, w] of Object.entries(weights)) {
       const cr = assetDateMap.get(id)?.get(date);
-      if (cr !== undefined) val += w * cr;
+      if (cr !== undefined) val += (w / availableWeightSum) * cr;
     }
     result.set(date, val);
   });
@@ -99,13 +117,14 @@ function lastReturn(series: Map<string, number>): number {
   return (last - 1) * 100;
 }
 
+type CompRow =
+  | { type: "section"; label: string; color: string }
+  | { type: "data"; label: string; color: string; mcap: number; liq: number };
+
 export default function PrivateFundDashboard({
   privateData,
   btcData,
   allAssets,
-  etfData,
-  qualityData,
-  riskData,
   positions,
   lastUpdated,
   latestRebalanceDate,
@@ -198,111 +217,60 @@ export default function PrivateFundDashboard({
     ? btcLive / btcPos.executionPrice - 1
     : (btcData?.dailyData.at(-1)?.cumReturn ?? 1) - 1;
 
-  // ── MCAP Universe weighted series ──────────────────────────────────────────
-  const mcapUnivMcapSeries = useMemo(() => computeWeightedSeries(MCAP_UNIV_MCAP_WEIGHTS, allAssets), [allAssets]);
-  const mcapUniv1NSeries   = useMemo(() => computeWeightedSeries(MCAP_UNIV_1N_WEIGHTS,   allAssets), [allAssets]);
+  // ── 1/N series ─────────────────────────────────────────────────────────────
+  const mcapOnnSeries = useMemo(() => computeWeightedSeries(MCAP_1N_WEIGHTS, allAssets), [allAssets]);
+  const liqOnnSeries  = useMemo(() => computeWeightedSeries(LIQ_1N_WEIGHTS,  allAssets), [allAssets]);
 
-  // ── Liquidity Universe weighted series ─────────────────────────────────────
-  const liqMcapSeries    = useMemo(() => computeWeightedSeries(MCAP_WEIGHTS,       allAssets), [allAssets]);
-  const liqVolSeries     = useMemo(() => computeWeightedSeries(VOLUME_WEIGHTS,     allAssets), [allAssets]);
-  const liqOnnSeries     = useMemo(() => computeWeightedSeries(LIQUIDITY_WEIGHTS,  allAssets), [allAssets]);
-  const liqEtfSeries     = useMemo(() => computeWeightedSeries(LIQ_ETF_WEIGHTS,    allAssets), [allAssets]);
-  const liqQualitySeries = useMemo(() => computeWeightedSeries(LIQ_QUALITY_WEIGHTS,allAssets), [allAssets]);
-  const liqRiskSeries    = useMemo(() => computeWeightedSeries(LIQ_RISK_WEIGHTS,   allAssets), [allAssets]);
+  // ── ETF MCAP family ─────────────────────────────────────────────────────────
+  const etfMBaseSeries    = useMemo(() => computeWeightedSeries(ETF_MCAP_BASE,      allAssets), [allAssets]);
+  const etfMMinvarSeries  = useMemo(() => computeWeightedSeries(ETF_MCAP_MINVAR,    allAssets), [allAssets]);
+  const etfMPlusLiqSeries = useMemo(() => computeWeightedSeries(ETF_MCAP_PLUS_LIQ,  allAssets), [allAssets]);
+  const etfMPlusTechSeries= useMemo(() => computeWeightedSeries(ETF_MCAP_PLUS_TECH, allAssets), [allAssets]);
 
-  // ── Benchmark metrics for each mode ────────────────────────────────────────
-  const mcapUnivMetrics: MetricsSummary[] = useMemo(() => [
-    {
-      label: "ETF Weights",
-      color: "#f59e0b",
-      totalReturn: parseFloat((((etfData?.dailyData.at(-1)?.cumReturn ?? 1) - 1) * 100).toFixed(2)),
-      sharpe: null, maxDrawdown: etfData?.metrics?.maxDrawdown ?? 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "Quality Factor",
-      color: "#10b981",
-      totalReturn: parseFloat((((qualityData?.dailyData.at(-1)?.cumReturn ?? 1) - 1) * 100).toFixed(2)),
-      sharpe: null, maxDrawdown: qualityData?.metrics?.maxDrawdown ?? 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "Risk Factor",
-      color: "#ef4444",
-      totalReturn: parseFloat((((riskData?.dailyData.at(-1)?.cumReturn ?? 1) - 1) * 100).toFixed(2)),
-      sharpe: null, maxDrawdown: riskData?.metrics?.maxDrawdown ?? 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "MCAP Weighted",
-      color: "#3b82f6",
-      totalReturn: parseFloat(lastReturn(mcapUnivMcapSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "1/N Equal",
-      color: "#ec4899",
-      totalReturn: parseFloat(lastReturn(mcapUniv1NSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-  ], [etfData, qualityData, riskData, mcapUnivMcapSeries, mcapUniv1NSeries]);
+  // ── ETF Liquidity family ────────────────────────────────────────────────────
+  const etfLBaseSeries    = useMemo(() => computeWeightedSeries(ETF_LIQ_BASE,      allAssets), [allAssets]);
+  const etfLMinvarSeries  = useMemo(() => computeWeightedSeries(ETF_LIQ_MINVAR,    allAssets), [allAssets]);
+  const etfLPlusLiqSeries = useMemo(() => computeWeightedSeries(ETF_LIQ_PLUS_LIQ,  allAssets), [allAssets]);
+  const etfLPlusTechSeries= useMemo(() => computeWeightedSeries(ETF_LIQ_PLUS_TECH, allAssets), [allAssets]);
 
-  const liqUnivMetrics: MetricsSummary[] = useMemo(() => [
-    {
-      label: "ETF Weights",
-      color: "#f59e0b",
-      totalReturn: parseFloat(lastReturn(liqEtfSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "Quality Factor",
-      color: "#10b981",
-      totalReturn: parseFloat(lastReturn(liqQualitySeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "Risk Factor",
-      color: "#ef4444",
-      totalReturn: parseFloat(lastReturn(liqRiskSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "MCAP Weighted",
-      color: "#3b82f6",
-      totalReturn: parseFloat(lastReturn(liqMcapSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "Liquidity Weighted",
-      color: "#84cc16",
-      totalReturn: parseFloat(lastReturn(liqVolSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-    {
-      label: "1/N Equal",
-      color: "#ec4899",
-      totalReturn: parseFloat(lastReturn(liqOnnSeries).toFixed(2)),
-      sharpe: null, maxDrawdown: 0, annReturn: 0, volatility: 0,
-    },
-  ], [liqEtfSeries, liqQualitySeries, liqRiskSeries, liqMcapSeries, liqVolSeries, liqOnnSeries]);
+  // ── PF family (universe-agnostic) ───────────────────────────────────────────
+  const pfBaseSeries      = useMemo(() => computeWeightedSeries(PF_BASE,         allAssets), [allAssets]);
+  const pfPlusSizeSeries  = useMemo(() => computeWeightedSeries(PF_PLUS_SIZE,    allAssets), [allAssets]);
+  const pfPlusLiqSeries   = useMemo(() => computeWeightedSeries(PF_PLUS_LIQ,     allAssets), [allAssets]);
+  const pfPlusTechSeries  = useMemo(() => computeWeightedSeries(PF_PLUS_TECH,    allAssets), [allAssets]);
+  const pfPlusQualSeries  = useMemo(() => computeWeightedSeries(PF_PLUS_QUALITY, allAssets), [allAssets]);
 
-  const benchmarkSeries = universeMode === "mcap" ? MCAP_UNIV_SERIES : LIQ_UNIV_SERIES;
-
-  // Side-by-side comparison rows (both universes always visible)
-  const comparisonRows = useMemo(() => [
-    { label: "ETF Weights",        color: "#f59e0b", mcap: mcapUnivMetrics[0].totalReturn, liq: liqUnivMetrics[0].totalReturn },
-    { label: "Quality Factor",     color: "#10b981", mcap: mcapUnivMetrics[1].totalReturn, liq: liqUnivMetrics[1].totalReturn },
-    { label: "Risk Factor",        color: "#ef4444", mcap: mcapUnivMetrics[2].totalReturn, liq: liqUnivMetrics[2].totalReturn },
-    { label: "MCAP Weighted",      color: "#3b82f6", mcap: mcapUnivMetrics[3].totalReturn, liq: liqUnivMetrics[3].totalReturn },
-    { label: "Liquidity Weighted", color: "#84cc16", mcap: null,                           liq: liqUnivMetrics[4].totalReturn },
-    { label: "1/N Equal",          color: "#ec4899", mcap: mcapUnivMetrics[4].totalReturn, liq: liqUnivMetrics[5].totalReturn },
-  ], [mcapUnivMetrics, liqUnivMetrics]);
+  // ── Comparison table rows ───────────────────────────────────────────────────
+  const comparisonRows = useMemo((): CompRow[] => {
+    const btcPct = parseFloat((btcReturn * 100).toFixed(2));
+    const r = (s: Map<string, number>) => parseFloat(lastReturn(s).toFixed(2));
+    return [
+      { type: "section", label: "Simple Benchmarks",         color: "#6b7280" },
+      { type: "data",    label: "Bitcoin",                    color: "#f97316", mcap: btcPct,                    liq: btcPct },
+      { type: "data",    label: "1/N Equal",                  color: "#f472b6", mcap: r(mcapOnnSeries),          liq: r(liqOnnSeries) },
+      { type: "section", label: "ETF Family (Construction)",  color: "#fbbf24" },
+      { type: "data",    label: "Base",                       color: "#fde68a", mcap: r(etfMBaseSeries),         liq: r(etfLBaseSeries) },
+      { type: "data",    label: "MinVar",                     color: "#fcd34d", mcap: r(etfMMinvarSeries),       liq: r(etfLMinvarSeries) },
+      { type: "data",    label: "+Liquidity",                 color: "#fbbf24", mcap: r(etfMPlusLiqSeries),      liq: r(etfLPlusLiqSeries) },
+      { type: "data",    label: "+Tech",                      color: "#f59e0b", mcap: r(etfMPlusTechSeries),     liq: r(etfLPlusTechSeries) },
+      { type: "section", label: "PF Family (Construction)",   color: "#10b981" },
+      { type: "data",    label: "Base",                       color: "#6ee7b7", mcap: r(pfBaseSeries),           liq: r(pfBaseSeries) },
+      { type: "data",    label: "+Size",                      color: "#34d399", mcap: r(pfPlusSizeSeries),       liq: r(pfPlusSizeSeries) },
+      { type: "data",    label: "+Liquidity",                 color: "#10b981", mcap: r(pfPlusLiqSeries),        liq: r(pfPlusLiqSeries) },
+      { type: "data",    label: "+Tech",                      color: "#059669", mcap: r(pfPlusTechSeries),       liq: r(pfPlusTechSeries) },
+      { type: "data",    label: "+Quality",                   color: "#047857", mcap: r(pfPlusQualSeries),       liq: r(pfPlusQualSeries) },
+    ];
+  }, [
+    btcReturn, mcapOnnSeries, liqOnnSeries,
+    etfMBaseSeries, etfMMinvarSeries, etfMPlusLiqSeries, etfMPlusTechSeries,
+    etfLBaseSeries, etfLMinvarSeries, etfLPlusLiqSeries, etfLPlusTechSeries,
+    pfBaseSeries, pfPlusSizeSeries, pfPlusLiqSeries, pfPlusTechSeries, pfPlusQualSeries,
+  ]);
 
   // ── Chart data (all series pre-computed) ───────────────────────────────────
   const chartSeries = useMemo((): ChartPoint[] => {
     const dateMap = new Map<string, ChartPoint>();
-    dateMap.set("2026-05-01", {
-      date: "2026-05-01",
-      index: 1000, combined: 1000,
-      etf: 1000, quality: 1000, risk: 1000,
-    });
+    dateMap.set("2026-05-01", { date: "2026-05-01", index: 1000, combined: 1000 });
 
     let combinedValue = 1000;
     if (privateData) {
@@ -320,59 +288,75 @@ export default function PrivateFundDashboard({
         dateMap.get(d.date)!.btc = parseFloat((d.cumReturn * 1000).toFixed(4));
       }
     }
-    // MCAP Universe pre-computed strategies
-    if (etfData) {
-      for (const d of etfData.dailyData) {
-        if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
-        dateMap.get(d.date)!.etf = parseFloat((d.cumReturn * 1000).toFixed(4));
-      }
-    }
-    if (qualityData) {
-      for (const d of qualityData.dailyData) {
-        if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
-        dateMap.get(d.date)!.quality = parseFloat((d.cumReturn * 1000).toFixed(4));
-      }
-    }
-    if (riskData) {
-      for (const d of riskData.dailyData) {
-        if (!dateMap.has(d.date)) dateMap.set(d.date, { date: d.date });
-        dateMap.get(d.date)!.risk = parseFloat((d.cumReturn * 1000).toFixed(4));
-      }
-    }
-    // MCAP Universe computed
-    mcapUnivMcapSeries.forEach((cr, date) => {
+
+    // 1/N
+    mcapOnnSeries.forEach((cr, date) => {
       if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.mcap_u = parseFloat((cr * 1000).toFixed(4));
-    });
-    mcapUniv1NSeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.onn_u = parseFloat((cr * 1000).toFixed(4));
-    });
-    // Liquidity Universe computed
-    liqEtfSeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.etf_l = parseFloat((cr * 1000).toFixed(4));
-    });
-    liqQualitySeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.quality_l = parseFloat((cr * 1000).toFixed(4));
-    });
-    liqRiskSeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.risk_l = parseFloat((cr * 1000).toFixed(4));
-    });
-    liqMcapSeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.mcap_l = parseFloat((cr * 1000).toFixed(4));
-    });
-    liqVolSeries.forEach((cr, date) => {
-      if (!dateMap.has(date)) dateMap.set(date, { date });
-      dateMap.get(date)!.vol_l = parseFloat((cr * 1000).toFixed(4));
+      dateMap.get(date)!.onn_m = parseFloat((cr * 1000).toFixed(4));
     });
     liqOnnSeries.forEach((cr, date) => {
       if (!dateMap.has(date)) dateMap.set(date, { date });
       dateMap.get(date)!.onn_l = parseFloat((cr * 1000).toFixed(4));
     });
+
+    // ETF MCAP family
+    etfMBaseSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.em_b = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfMMinvarSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.em_mv = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfMPlusLiqSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.em_lq = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfMPlusTechSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.em_tc = parseFloat((cr * 1000).toFixed(4));
+    });
+
+    // ETF Liquidity family
+    etfLBaseSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.el_b = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfLMinvarSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.el_mv = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfLPlusLiqSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.el_lq = parseFloat((cr * 1000).toFixed(4));
+    });
+    etfLPlusTechSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.el_tc = parseFloat((cr * 1000).toFixed(4));
+    });
+
+    // PF family
+    pfBaseSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.pf_b = parseFloat((cr * 1000).toFixed(4));
+    });
+    pfPlusSizeSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.pf_sz = parseFloat((cr * 1000).toFixed(4));
+    });
+    pfPlusLiqSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.pf_lq = parseFloat((cr * 1000).toFixed(4));
+    });
+    pfPlusTechSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.pf_tc = parseFloat((cr * 1000).toFixed(4));
+    });
+    pfPlusQualSeries.forEach((cr, date) => {
+      if (!dateMap.has(date)) dateMap.set(date, { date });
+      dateMap.get(date)!.pf_ql = parseFloat((cr * 1000).toFixed(4));
+    });
+
     // Live point for Private Fund + BTC
     if (isLive) {
       const today = new Date().toISOString().split("T")[0];
@@ -385,16 +369,21 @@ export default function PrivateFundDashboard({
 
     return Array.from(dateMap.values()).sort((a, b) => (a.date as string).localeCompare(b.date as string));
   }, [
-    privateData, btcData, etfData, qualityData, riskData,
-    mcapUnivMcapSeries, mcapUniv1NSeries,
-    liqEtfSeries, liqQualitySeries, liqRiskSeries,
-    liqMcapSeries, liqVolSeries, liqOnnSeries,
+    privateData, btcData,
+    mcapOnnSeries, liqOnnSeries,
+    etfMBaseSeries, etfMMinvarSeries, etfMPlusLiqSeries, etfMPlusTechSeries,
+    etfLBaseSeries, etfLMinvarSeries, etfLPlusLiqSeries, etfLPlusTechSeries,
+    pfBaseSeries, pfPlusSizeSeries, pfPlusLiqSeries, pfPlusTechSeries, pfPlusQualSeries,
     isLive, portfolioLiveReturn, btcPos, btcLive,
   ]);
 
   const activeSeries = useMemo(
-    () => [...ALWAYS_SERIES, ...benchmarkSeries],
-    [benchmarkSeries],
+    () => [
+      ...ALWAYS_SERIES,
+      ...PF_SERIES,
+      ...(universeMode === "mcap" ? ETF_MCAP_SERIES : ETF_LIQ_SERIES),
+    ],
+    [universeMode],
   );
 
   const topMovers = useMemo(
@@ -508,50 +497,65 @@ export default function PrivateFundDashboard({
               </div>
             </section>
 
-            {/* Benchmark comparison table — both universes side by side */}
+            {/* Construction-stage comparison table */}
             <section>
               <SectionHeader
-                title="Benchmark Strategies"
-                subtitle="MCAP Universe vs Liquidity Universe · side-by-side"
+                title="Construction Stage Comparison"
+                subtitle="MCAP Universe vs Liquidity Universe · PF and ETF families"
               />
               <div className="bg-[#1a1d29] rounded-xl border border-[#2d3144] overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#2d3144]">
-                      <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">Strategy</th>
+                      <th className="text-left px-4 py-3 text-gray-400 font-medium text-xs">Strategy / Stage</th>
                       <th className="text-right px-4 py-3 text-xs font-medium" style={{ color: "#60a5fa" }}>MCAP Universe</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium" style={{ color: "#84cc16" }}>Liquidity Universe</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium" style={{ color: "#38bdf8" }}>Liq Universe</th>
                       <th className="text-right px-4 py-3 text-gray-400 font-medium text-xs">Δ</th>
                       <th className="text-center px-4 py-3 text-gray-400 font-medium text-xs">Better</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {comparisonRows.map((row) => {
-                      const diff = row.mcap !== null && row.liq !== null ? row.liq - row.mcap : null;
-                      const liqWins = diff !== null && diff > 0;
-                      const mcapWins = diff !== null && diff < 0;
+                    {comparisonRows.map((row, i) => {
+                      if (row.type === "section") {
+                        return (
+                          <tr key={`sec-${i}`} className="border-b border-[#2d3144]">
+                            <td colSpan={5} className="px-4 py-2">
+                              <span
+                                className="text-xs font-semibold tracking-wider uppercase"
+                                style={{ color: row.color }}
+                              >
+                                {row.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      }
+                      const diff = parseFloat((row.liq - row.mcap).toFixed(2));
+                      const liqWins = diff > 0;
+                      const mcapWins = diff < 0;
+                      const isSame = diff === 0;
                       return (
-                        <tr key={row.label} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
-                          <td className="px-4 py-3 flex items-center gap-2.5">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: row.color }} />
-                            <span className="text-gray-200 font-medium">{row.label}</span>
+                        <tr key={row.label + i} className="border-b border-[#2d3144] hover:bg-[#ffffff04]">
+                          <td className="px-4 py-2.5 pl-6 flex items-center gap-2.5">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: row.color }} />
+                            <span className="text-gray-200">{row.label}</span>
                           </td>
-                          <td className="px-4 py-3 text-right font-mono font-medium"
-                            style={{ color: row.mcap !== null ? (row.mcap >= 0 ? "#4ade80" : "#f87171") : "#374151" }}>
-                            {row.mcap !== null ? `${row.mcap >= 0 ? "+" : ""}${row.mcap.toFixed(2)}%` : "—"}
+                          <td className="px-4 py-2.5 text-right font-mono font-medium"
+                            style={{ color: row.mcap >= 0 ? "#4ade80" : "#f87171" }}>
+                            {row.mcap >= 0 ? "+" : ""}{row.mcap.toFixed(2)}%
                           </td>
-                          <td className="px-4 py-3 text-right font-mono font-medium"
-                            style={{ color: row.liq !== null ? (row.liq >= 0 ? "#4ade80" : "#f87171") : "#374151" }}>
-                            {row.liq !== null ? `${row.liq >= 0 ? "+" : ""}${row.liq.toFixed(2)}%` : "—"}
+                          <td className="px-4 py-2.5 text-right font-mono font-medium"
+                            style={{ color: row.liq >= 0 ? "#4ade80" : "#f87171" }}>
+                            {row.liq >= 0 ? "+" : ""}{row.liq.toFixed(2)}%
                           </td>
-                          <td className="px-4 py-3 text-right font-mono text-xs"
-                            style={{ color: diff === null ? "#374151" : diff >= 0 ? "#86efac" : "#fca5a5" }}>
-                            {diff !== null ? `${diff >= 0 ? "+" : ""}${diff.toFixed(2)}%` : "—"}
+                          <td className="px-4 py-2.5 text-right font-mono text-xs"
+                            style={{ color: isSame ? "#4b5563" : diff > 0 ? "#86efac" : "#fca5a5" }}>
+                            {isSame ? "—" : `${diff > 0 ? "+" : ""}${diff.toFixed(2)}%`}
                           </td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-4 py-2.5 text-center">
                             {liqWins && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-                                style={{ background: "#84cc1620", color: "#84cc16", border: "1px solid #84cc1640" }}>
+                                style={{ background: "#38bdf820", color: "#38bdf8", border: "1px solid #38bdf840" }}>
                                 Liq ↑
                               </span>
                             )}
@@ -561,8 +565,7 @@ export default function PrivateFundDashboard({
                                 MCAP ↑
                               </span>
                             )}
-                            {diff === 0 && <span className="text-gray-600 text-xs">Tie</span>}
-                            {diff === null && <span className="text-gray-700 text-xs">—</span>}
+                            {isSame && <span className="text-gray-600 text-xs">Same</span>}
                           </td>
                         </tr>
                       );
@@ -570,8 +573,8 @@ export default function PrivateFundDashboard({
                   </tbody>
                 </table>
                 <div className="px-4 py-2 border-t border-[#2d3144] text-xs text-gray-600">
-                  MCAP Universe: BTC/ETH/BNB/SOL/XRP/ADA/LINK/XLM/UNI/LTC/ZEC/BCH ·
-                  Liquidity Universe: BTC/ETH/SOL/XRP/BNB/ADA/ZEC/LINK/LTC/HYPE/BCH/UNI
+                  MCAP Universe: BTC/ETH/BNB/SOL/XRP/ADA/LINK/XLM/UNI/LTC/ZEC/BCH + COIN/HOOD/MSTR ·
+                  Liq Universe: replaces XLM with HYPE; ETF missing aave/sui (renormalized) · PF missing sky (renormalized)
                 </div>
               </div>
             </section>
@@ -581,7 +584,11 @@ export default function PrivateFundDashboard({
               <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
                 <div>
                   <h2 className="text-lg font-semibold">Index Performance (Base 1000)</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">toggle series to compare · click legend to show/hide</p>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {universeMode === "mcap"
+                      ? "MCAP Universe · ETF family in amber · PF family in emerald"
+                      : "Liquidity Universe · ETF family in sky · PF family in emerald"}
+                  </p>
                 </div>
                 <div className="flex items-center rounded-lg overflow-hidden border border-[#2d3144] text-xs font-medium">
                   {(["mcap", "liquidity"] as UniverseMode[]).map((mode) => {
@@ -596,7 +603,7 @@ export default function PrivateFundDashboard({
                           color: active ? "#fff" : "#6b7280",
                         }}
                       >
-                        {mode === "mcap" ? "MCAP Universe" : "Liquidity Universe"}
+                        {mode === "mcap" ? "MCAP Universe" : "Liq Universe"}
                       </button>
                     );
                   })}
@@ -777,27 +784,6 @@ function MetricCard({ m }: { m: MetricsSummary }) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function MetricCardSmall({ m }: { m: MetricsSummary }) {
-  return (
-    <div
-      className="bg-[#1a1d29] rounded-xl p-3 border border-[#2d3144]"
-      style={{ borderLeftWidth: 3, borderLeftColor: m.color }}
-    >
-      <div className="text-xs mb-1 truncate" style={{ color: m.color }}>{m.label}</div>
-      <div className="text-xl font-bold" style={{ color: m.totalReturn >= 0 ? "#4ade80" : "#f87171" }}>
-        {m.totalReturn >= 0 ? "+" : ""}{m.totalReturn.toFixed(2)}%
-      </div>
-      <div className="text-xs text-gray-600 mt-0.5">Total Return</div>
-      {m.maxDrawdown > 0 && (
-        <div className="mt-2 text-xs">
-          <span className="text-gray-600">Max DD </span>
-          <span className="text-red-400 font-mono">-{m.maxDrawdown.toFixed(2)}%</span>
-        </div>
-      )}
     </div>
   );
 }

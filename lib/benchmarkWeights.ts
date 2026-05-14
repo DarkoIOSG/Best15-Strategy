@@ -1,123 +1,248 @@
-// ── MCAP Universe ────────────────────────────────────────────────────────────
-// Original 15-asset universe (stellar, no sui/aave/avalanche-2/hyperliquid).
-// 12 assets available in performance data; missing ~3.84% renormalized away.
+// ── 1/N Equal-Weight Benchmarks ──────────────────────────────────────────────
 
-const MCAP_UNIV_TOTAL = 96.16;
-export const MCAP_UNIV_MCAP_WEIGHTS: Record<string, number> = {
-  bitcoin:        73.60 / MCAP_UNIV_TOTAL,
-  ethereum:        9.17 / MCAP_UNIV_TOTAL,
-  binancecoin:     3.97 / MCAP_UNIV_TOTAL,
-  solana:          3.95 / MCAP_UNIV_TOTAL,
-  ripple:          2.38 / MCAP_UNIV_TOTAL,
-  cardano:         1.42 / MCAP_UNIV_TOTAL,
-  chainlink:       0.57 / MCAP_UNIV_TOTAL,
-  stellar:         0.31 / MCAP_UNIV_TOTAL,
-  uniswap:         0.22 / MCAP_UNIV_TOTAL,
-  litecoin:        0.22 / MCAP_UNIV_TOTAL,
-  zcash:           0.18 / MCAP_UNIV_TOTAL,
-  "bitcoin-cash":  0.17 / MCAP_UNIV_TOTAL,
-};
-
-const MCAP_UNIV_N = 12;
-export const MCAP_UNIV_1N_WEIGHTS: Record<string, number> = Object.fromEntries(
-  Object.keys(MCAP_UNIV_MCAP_WEIGHTS).map((a) => [a, 1 / MCAP_UNIV_N]),
+// MCAP Universe — 12 assets (stellar, no hyperliquid)
+const MCAP_UNIV_ASSETS = [
+  "bitcoin", "ethereum", "binancecoin", "solana", "ripple",
+  "cardano", "chainlink", "stellar", "uniswap", "litecoin", "zcash", "bitcoin-cash",
+] as const;
+export const MCAP_1N_WEIGHTS: Record<string, number> = Object.fromEntries(
+  MCAP_UNIV_ASSETS.map((a) => [a, 1 / MCAP_UNIV_ASSETS.length]),
 );
 
-// ── Liquidity Universe ────────────────────────────────────────────────────────
-// New 15-asset universe (hyperliquid, uniswap, aave, sui, avalanche-2).
-// Missing: sui, aave, avalanche-2. Weights below renormalized to available assets.
-
-// MCAP-weighted — missing 0.43% (sui+aave+avalanche-2)
-const LIQ_MCAP_TOTAL = 99.57;
-export const MCAP_WEIGHTS: Record<string, number> = {
-  bitcoin:        73.80 / LIQ_MCAP_TOTAL,
-  ethereum:       13.15 / LIQ_MCAP_TOTAL,
-  ripple:          4.07 / LIQ_MCAP_TOTAL,
-  binancecoin:     4.00 / LIQ_MCAP_TOTAL,
-  solana:          2.31 / LIQ_MCAP_TOTAL,
-  hyperliquid:     0.46 / LIQ_MCAP_TOTAL,
-  cardano:         0.44 / LIQ_MCAP_TOTAL,
-  "bitcoin-cash":  0.43 / LIQ_MCAP_TOTAL,
-  chainlink:       0.32 / LIQ_MCAP_TOTAL,
-  zcash:           0.28 / LIQ_MCAP_TOTAL,
-  litecoin:        0.21 / LIQ_MCAP_TOTAL,
-  uniswap:         0.10 / LIQ_MCAP_TOTAL,
-};
-
-// Volume/liquidity-weighted — missing 1.36% (sui+aave+avalanche-2)
-const LIQ_VOL_TOTAL = 98.65;
-export const VOLUME_WEIGHTS: Record<string, number> = {
-  bitcoin:        59.55 / LIQ_VOL_TOTAL,
-  ethereum:       26.32 / LIQ_VOL_TOTAL,
-  solana:          5.18 / LIQ_VOL_TOTAL,
-  ripple:          3.33 / LIQ_VOL_TOTAL,
-  binancecoin:     1.36 / LIQ_VOL_TOTAL,
-  cardano:         0.62 / LIQ_VOL_TOTAL,
-  zcash:           0.47 / LIQ_VOL_TOTAL,
-  chainlink:       0.45 / LIQ_VOL_TOTAL,
-  litecoin:        0.43 / LIQ_VOL_TOTAL,
-  hyperliquid:     0.38 / LIQ_VOL_TOTAL,
-  "bitcoin-cash":  0.31 / LIQ_VOL_TOTAL,
-  uniswap:         0.25 / LIQ_VOL_TOTAL,
-};
-
-// 1/N equal-weight — 12 of 15 available
-const LIQ_N = 12;
-export const LIQUIDITY_WEIGHTS: Record<string, number> = Object.fromEntries(
-  Object.keys(VOLUME_WEIGHTS).map((a) => [a, 1 / LIQ_N]),
+// Liquidity Universe — 12 assets (hyperliquid instead of stellar)
+const LIQ_UNIV_ASSETS = [
+  "bitcoin", "ethereum", "solana", "ripple", "binancecoin",
+  "cardano", "zcash", "chainlink", "litecoin", "hyperliquid", "bitcoin-cash", "uniswap",
+] as const;
+export const LIQ_1N_WEIGHTS: Record<string, number> = Object.fromEntries(
+  LIQ_UNIV_ASSETS.map((a) => [a, 1 / LIQ_UNIV_ASSETS.length]),
 );
 
-// ETF (Min-Var) — liquidity universe — missing sui(1%) + aave(1.24%) → 97.76% available
-const LIQ_ETF_TOTAL = 97.76;
-export const LIQ_ETF_WEIGHTS: Record<string, number> = {
-  bitcoin:        44.71 / LIQ_ETF_TOTAL,
-  mstr:           15.00 / LIQ_ETF_TOTAL,
-  coin:            8.01 / LIQ_ETF_TOTAL,
-  hood:            6.99 / LIQ_ETF_TOTAL,
-  binancecoin:     7.22 / LIQ_ETF_TOTAL,
-  litecoin:        3.13 / LIQ_ETF_TOTAL,
-  ripple:          2.85 / LIQ_ETF_TOTAL,
-  ethereum:        2.44 / LIQ_ETF_TOTAL,
-  hyperliquid:     1.78 / LIQ_ETF_TOTAL,
-  solana:          1.50 / LIQ_ETF_TOTAL,
-  chainlink:       1.40 / LIQ_ETF_TOTAL,
-  cardano:         1.45 / LIQ_ETF_TOTAL,
-  zcash:           1.28 / LIQ_ETF_TOTAL,
+// ── ETF Family — MCAP Universe ────────────────────────────────────────────────
+// All 15 assets available in performance data (coin/hood/mstr/bnb/btc/bch/ada/link/eth/hype/ltc/xrp/sol/xlm/zec)
+
+export const ETF_MCAP_BASE: Record<string, number> = {
+  coin:           0.053888433455917616,
+  hood:           0.063074819208773100,
+  mstr:           0.063275537408127440,
+  binancecoin:    0.075230757097908230,
+  bitcoin:        0.322987801800353500,
+  "bitcoin-cash": 0.024562486325924280,
+  cardano:        0.024928063442610296,
+  chainlink:      0.021259672153624957,
+  ethereum:       0.136349473062585050,
+  hyperliquid:    0.025413554821193365,
+  litecoin:       0.017043021040248473,
+  ripple:         0.075878232707398960,
+  solana:         0.057138179059794215,
+  stellar:        0.018982351545994054,
+  zcash:          0.019987616869546528,
 };
 
-// Quality Factor — liquidity universe — missing sky(1.14%) → 98.86% available
-const LIQ_QUALITY_TOTAL = 98.86;
-export const LIQ_QUALITY_WEIGHTS: Record<string, number> = {
-  bitcoin:        32.57 / LIQ_QUALITY_TOTAL,
-  ethereum:       15.57 / LIQ_QUALITY_TOTAL,
-  hood:            8.26 / LIQ_QUALITY_TOTAL,
-  mstr:            7.36 / LIQ_QUALITY_TOTAL,
-  coin:            7.25 / LIQ_QUALITY_TOTAL,
-  solana:          6.22 / LIQ_QUALITY_TOTAL,
-  crcl:            5.38 / LIQ_QUALITY_TOTAL,
-  binancecoin:     5.36 / LIQ_QUALITY_TOTAL,
-  hyperliquid:     3.01 / LIQ_QUALITY_TOTAL,
-  chainlink:       2.25 / LIQ_QUALITY_TOTAL,
-  zcash:           2.15 / LIQ_QUALITY_TOTAL,
-  uniswap:         1.48 / LIQ_QUALITY_TOTAL,
-  "ether-fi":      1.00 / LIQ_QUALITY_TOTAL,
-  morpho:          1.00 / LIQ_QUALITY_TOTAL,
+export const ETF_MCAP_MINVAR: Record<string, number> = {
+  coin:           0.081865013533303650,
+  hood:           0.068134986466696370,
+  mstr:           0.15,
+  binancecoin:    0.037871209807392380,
+  bitcoin:        0.451065913563275360,
+  "bitcoin-cash": 0.049962674921199754,
+  cardano:        0.011377310836608768,
+  chainlink:      0.012169623114603666,
+  ethereum:       0.020977455787118075,
+  hyperliquid:    0.026314617422729558,
+  litecoin:       0.023640093676515550,
+  ripple:         0.027956630649606573,
+  solana:         0.011985125277182946,
+  stellar:        0.016679344943767420,
+  zcash:          0.01,
 };
 
-// Risk Factor — liquidity universe — missing sui(1%) + aave(1%) → 98.02% available
-const LIQ_RISK_TOTAL = 98.02;
-export const LIQ_RISK_WEIGHTS: Record<string, number> = {
-  mstr:           17.64 / LIQ_RISK_TOTAL,
-  coin:           15.07 / LIQ_RISK_TOTAL,
-  hood:           14.55 / LIQ_RISK_TOTAL,
-  bitcoin:        12.29 / LIQ_RISK_TOTAL,
-  binancecoin:    12.00 / LIQ_RISK_TOTAL,
-  litecoin:        6.47 / LIQ_RISK_TOTAL,
-  ripple:          6.29 / LIQ_RISK_TOTAL,
-  ethereum:        5.10 / LIQ_RISK_TOTAL,
-  solana:          3.86 / LIQ_RISK_TOTAL,
-  hyperliquid:     1.68 / LIQ_RISK_TOTAL,
-  cardano:         1.07 / LIQ_RISK_TOTAL,
-  zcash:           1.00 / LIQ_RISK_TOTAL,
-  chainlink:       1.00 / LIQ_RISK_TOTAL,
+export const ETF_MCAP_PLUS_LIQ: Record<string, number> = {
+  coin:           0.0816,
+  hood:           0.0684,
+  mstr:           0.15,
+  binancecoin:    0.0526,
+  bitcoin:        0.4511,
+  "bitcoin-cash": 0.0358,
+  cardano:        0.0123,
+  chainlink:      0.0126,
+  ethereum:       0.021,
+  hyperliquid:    0.0218,
+  litecoin:       0.0252,
+  ripple:         0.0279,
+  solana:         0.0132,
+  stellar:        0.0163,
+  zcash:          0.0101,
+};
+
+export const ETF_MCAP_PLUS_TECH: Record<string, number> = {
+  coin:           0.0784,
+  hood:           0.0641,
+  mstr:           0.15,
+  binancecoin:    0.0349,
+  bitcoin:        0.456,
+  "bitcoin-cash": 0.0814,
+  cardano:        0.0105,
+  chainlink:      0.0107,
+  ethereum:       0.0212,
+  hyperliquid:    0.014,
+  litecoin:       0.0224,
+  ripple:         0.0229,
+  solana:         0.0109,
+  stellar:        0.0118,
+  zcash:          0.0108,
+};
+
+// ── ETF Family — Liquidity Universe ──────────────────────────────────────────
+// Missing: aave, sui → computeWeightedSeries normalizes by available weight sum
+
+export const ETF_LIQ_BASE: Record<string, number> = {
+  coin:        0.054880845506078760,
+  hood:        0.064236408192348370,
+  mstr:        0.064440822827968360,
+  binancecoin: 0.076616210433600100,
+  bitcoin:     0.328935961099211970,
+  cardano:     0.025387139889281644,
+  chainlink:   0.021651191325266717,
+  ethereum:    0.138860491687966400,
+  hyperliquid: 0.025881572101053886,
+  litecoin:    0.017356886156875560,
+  ripple:      0.077275609985871060,
+  solana:      0.058190438585385940,
+  zcash:       0.020355709808295038,
+};
+
+export const ETF_LIQ_MINVAR: Record<string, number> = {
+  coin:        0.080034232911397250,
+  hood:        0.069965767088602750,
+  mstr:        0.15,
+  binancecoin: 0.055389203666261480,
+  bitcoin:     0.443846746901235930,
+  cardano:     0.014064560658367947,
+  chainlink:   0.015201951141485206,
+  ethereum:    0.024155706673001456,
+  hyperliquid: 0.032059829657265100,
+  litecoin:    0.031690672892099480,
+  ripple:      0.031997546425762580,
+  solana:      0.015144717018582636,
+  zcash:       0.012064822510700965,
+};
+
+export const ETF_LIQ_PLUS_LIQ: Record<string, number> = {
+  coin:        0.0802,
+  hood:        0.0698,
+  mstr:        0.15,
+  binancecoin: 0.0676,
+  bitcoin:     0.4436,
+  cardano:     0.0147,
+  chainlink:   0.0148,
+  ethereum:    0.0243,
+  hyperliquid: 0.0223,
+  litecoin:    0.0291,
+  ripple:      0.0321,
+  solana:      0.016,
+  zcash:       0.0119,
+};
+
+export const ETF_LIQ_PLUS_TECH: Record<string, number> = {
+  coin:        0.0801,
+  hood:        0.0699,
+  mstr:        0.15,
+  binancecoin: 0.0722,
+  bitcoin:     0.4471,
+  cardano:     0.0145,
+  chainlink:   0.014,
+  ethereum:    0.0244,
+  hyperliquid: 0.0178,
+  litecoin:    0.0313,
+  ripple:      0.0285,
+  solana:      0.015,
+  zcash:       0.0128,
+};
+
+// ── PF Family — same weights for MCAP and Liquidity universes ─────────────────
+// Missing: sky → computeWeightedSeries normalizes by available weight sum
+
+export const PF_BASE: Record<string, number> = {
+  coin:        0.08757268597546156,
+  crcl:        0.059303186127860626,
+  hood:        0.10185740032479675,
+  mstr:        0.08822011453021987,
+  bitcoin:     0.3000631959513975,
+  chainlink:   0.020390060962174616,
+  "ether-fi":  5.957417841171345e-05,
+  ethereum:    0.1902274198341007,
+  hyperliquid: 0.039440623093709826,
+  morpho:      0.009252812391341122,
+  solana:      0.061612752488162954,
+  uniswap:     0.017592722531619715,
+  zcash:       0.01191418945007743,
+};
+
+export const PF_PLUS_SIZE: Record<string, number> = {
+  coin:        0.08680987461534564,
+  crcl:        0.03430907175848295,
+  hood:        0.07888105362617134,
+  mstr:        0.1,
+  binancecoin: 0.1,
+  bitcoin:     0.38270966421197555,
+  chainlink:   0.015483205526759624,
+  "ether-fi":  0.012192121864043465,
+  ethereum:    0.017716582812277455,
+  hyperliquid: 0.029777748336373675,
+  morpho:      0.01793627675498861,
+  solana:      0.015181037684936335,
+  uniswap:     0.014080329352504053,
+  zcash:       0.010065941160863068,
+};
+
+export const PF_PLUS_LIQ: Record<string, number> = {
+  coin:        0.08852873995463839,
+  crcl:        0.035497709878511016,
+  hood:        0.07597355016685058,
+  mstr:        0.1,
+  binancecoin: 0.1,
+  bitcoin:     0.43738160953774996,
+  chainlink:   0.01527002993665845,
+  "ether-fi":  0.011270247323173156,
+  ethereum:    0.018077938604765982,
+  hyperliquid: 0.025366462758376392,
+  morpho:      0.01479724091008594,
+  solana:      0.015408688945664183,
+  uniswap:     0.01327273599035586,
+  zcash:       0.01,
+};
+
+export const PF_PLUS_TECH: Record<string, number> = {
+  coin:        0.08797947665665058,
+  crcl:        0.03570226385946558,
+  hood:        0.0763182594838838,
+  mstr:        0.1,
+  binancecoin: 0.06601662199897564,
+  bitcoin:     0.5,
+  chainlink:   0.012433858891424267,
+  "ether-fi":  0.010000000000000002,
+  ethereum:    0.013175243770316016,
+  hyperliquid: 0.01572945749417817,
+  morpho:      0.016871691968353565,
+  solana:      0.012476985994446868,
+  uniswap:     0.013639962838981555,
+  zcash:       0.010039695152581735,
+};
+
+export const PF_PLUS_QUALITY: Record<string, number> = {
+  coin:        0.07387577287449308,
+  crcl:        0.046352086735463316,
+  hood:        0.0688597984866872,
+  mstr:        0.09453899979123273,
+  binancecoin: 0.017016208373020272,
+  bitcoin:     0.4726563648994512,
+  chainlink:   0.015971929044250842,
+  "ether-fi":  0.01,
+  ethereum:    0.03674384446697792,
+  hyperliquid: 0.06338722375216412,
+  morpho:      0.01709448904988038,
+  solana:      0.017767797222247445,
+  uniswap:     0.020942100881150425,
+  zcash:       0.01,
 };
